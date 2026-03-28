@@ -296,40 +296,41 @@ String email
 ### High-Level Design
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│              Unified Spring Boot Application                 │
-│                   (Single Server)                            │
-│                   (Port 8080)                                │
-│                                                              │
-│  ┌──────────────────┐          ┌─────────────────────────┐ │
-│  │   REST API       │          │    MCP Endpoints        │ │
-│  │  /api/v1/...     │          │     /mcp/...            │ │
-│  │                  │          │                         │ │
-│  │ - User routes    │          │ - tools/list            │ │
-│  │ - Auth endpoints │          │ - tools/call            │ │
-│  │ - CRUD ops       │          │ - resources/list        │ │
-│  └──────────────────┘          │ - resources/read        │ │
-│                                 │ - prompts/list          │ │
-│  ┌──────────────────────────────┼──────────────────────┐ │
-│  │  Spring Beans, Controllers, Services, Repositories  │ │
-│  │  (Decorated with @McpTool/@McpResource/@McpPrompt) │ │
-│  └──────────────────────────────────────────────────────┘ │
-│                                                              │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │  Spring Boot MCP Companion Framework                │    │
-│  │                                                     │    │
-│  │  • Metadata Extraction                             │    │
-│  │  • Type Mapping & JSON Schema Generation           │    │
-│  │  • Input Validation                                │    │
-│  │  • JSON-RPC 2.0 Handler                            │    │
-│  │  • Security, Rate Limiting, Observability          │    │
-│  └────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │  Shared Resources: Thread Pool, Connection Pool    │    │
-│  │  Database Access, Metrics, Logging                 │    │
-│  └────────────────────────────────────────────────────┘    │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│              Unified Spring Boot Application                │
+│                   (Single Server)                           │
+│                   (Port 8080)                               │
+│                                                             │
+│  ┌──────────────────┐          ┌─────────────────────────┐  │
+│  │   REST API       │          │    MCP Endpoints        │  │
+│  │  /api/v1/...     │          │     /mcp/...            │  │
+│  │                  │          │                         │  │
+│  │ - User routes    │          │ - tools/list            │  │
+│  │ - Auth endpoints │          │ - tools/call            │  │
+│  │ - CRUD ops       │          │ - resources/list        │  │
+│  └──────────────────┘          │ - resources/read        │  │
+│                                │ - prompts/list          │  │
+│                                └─────────────────────────┘  │
+|  ┌────────────────────────────────────────────────────┐     │
+│  │  Spring Beans, Controllers, Services, Repositories │     │
+│  │  (Decorated with @McpTool/@McpResource/@McpPrompt) │     │
+│  └────────────────────────────────────────────────────┘     │
+│                                                             │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  Spring Boot MCP Companion Framework               │     │
+│  │                                                    │     │
+│  │  • Metadata Extraction                             │     │
+│  │  • Type Mapping & JSON Schema Generation           │     │
+│  │  • Input Validation                                │     │
+│  │  • JSON-RPC 2.0 Handler                            │     │
+│  │  • Security, Rate Limiting, Observability          │     │
+│  └────────────────────────────────────────────────────┘     │
+│                                                             │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  Shared Resources: Thread Pool, Connection Pool    │     │
+│  │  Database Access, Metrics, Logging                 │     │
+│  └────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Project Structure
