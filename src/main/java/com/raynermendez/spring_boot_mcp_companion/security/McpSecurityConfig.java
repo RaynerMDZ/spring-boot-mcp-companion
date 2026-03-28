@@ -48,4 +48,26 @@ public class McpSecurityConfig implements WebMvcConfigurer {
 
     return registration;
   }
+
+  /**
+   * Registers the Slowloris protection filter.
+   *
+   * <p>This filter protects against Slowloris attacks that try to exhaust server resources by
+   * sending incomplete HTTP requests very slowly.
+   *
+   * @return a FilterRegistrationBean for the Slowloris protection filter
+   */
+  @Bean
+  public FilterRegistrationBean<SlowlorisProtectionFilter> slowlorisProtectionFilter() {
+    SlowlorisProtectionFilter filter = new SlowlorisProtectionFilter();
+
+    FilterRegistrationBean<SlowlorisProtectionFilter> registration =
+        new FilterRegistrationBean<>();
+    registration.setFilter(filter);
+    registration.addUrlPatterns("/*");
+    registration.setName("slowlorisProtectionFilter");
+    registration.setOrder(0); // Run first, before other filters
+
+    return registration;
+  }
 }
