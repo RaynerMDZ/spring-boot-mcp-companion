@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: spring-boot-mcp-companion
+
+# MCP Server Configuration (uncomment to customize)
+# mcp:
+#   server:
+#     enabled: true          # Enable/disable MCP server (default: true)
+#     base-path: /mcp        # Base path for MCP endpoints (default: /mcp)
+#     name: spring-boot-mcp  # Server name for MCP server-info
+#     version: 1.0.0         # Server version for MCP server-info

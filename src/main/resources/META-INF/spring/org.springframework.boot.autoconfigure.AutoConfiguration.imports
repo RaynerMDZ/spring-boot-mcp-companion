@@ -1,0 +1,3 @@
+# Spring Boot Auto-Configuration Imports for MCP Server
+# Auto-configurations will be registered here when created
+com.raynermendez.spring_boot_mcp_companion.config.McpAutoConfiguration
