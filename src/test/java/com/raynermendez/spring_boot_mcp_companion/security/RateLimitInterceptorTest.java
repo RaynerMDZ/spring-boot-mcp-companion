@@ -51,7 +51,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should reject requests exceeding rate limit")
-  throws Exception {
+  void testRejectRequestsExceedingRateLimit() throws Exception {
     StringWriter stringWriter = new StringWriter();
     PrintWriter printWriter = new PrintWriter(stringWriter);
 
@@ -71,7 +71,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should identify clients by remote IP")
-  throws Exception {
+  void testIdentifyClientsById() throws Exception {
     // Two different IPs should have separate rate limits
     when(request.getRemoteAddr()).thenReturn("192.168.1.1");
     when(request.getHeader("X-Forwarded-For")).thenReturn(null);
@@ -97,7 +97,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should use X-Forwarded-For header for proxied requests")
-  throws Exception {
+  void testUseXForwardedForHeader() throws Exception {
     // X-Forwarded-For should take precedence
     when(request.getRemoteAddr()).thenReturn("proxy-ip");
     when(request.getHeader("X-Forwarded-For")).thenReturn("192.168.1.100");
@@ -114,7 +114,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should handle X-Forwarded-For with multiple IPs")
-  throws Exception {
+  void testHandleXForwardedForMultiple() throws Exception {
     // X-Forwarded-For can contain multiple IPs; we should use the first
     when(request.getRemoteAddr()).thenReturn("proxy-ip");
     when(request.getHeader("X-Forwarded-For")).thenReturn("192.168.1.100, 10.0.0.1, proxy-ip");
@@ -126,7 +126,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should set Retry-After header on rate limit")
-  throws Exception {
+  void testSetRetryAfterHeader() throws Exception {
     StringWriter stringWriter = new StringWriter();
     PrintWriter printWriter = new PrintWriter(stringWriter);
 
@@ -144,7 +144,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should handle null remote address gracefully")
-  throws Exception {
+  void testHandleNullRemoteAddress() throws Exception {
     when(request.getRemoteAddr()).thenReturn(null);
     when(request.getHeader("X-Forwarded-For")).thenReturn(null);
 
@@ -154,7 +154,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should handle empty X-Forwarded-For header")
-  throws Exception {
+  void testHandleEmptyXForwardedFor() throws Exception {
     when(request.getRemoteAddr()).thenReturn("192.168.1.1");
     when(request.getHeader("X-Forwarded-For")).thenReturn("");
 
@@ -164,7 +164,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should return HTTP 429 with error JSON")
-  throws Exception {
+  void testReturn429WithErrorJson() throws Exception {
     StringWriter stringWriter = new StringWriter();
     PrintWriter printWriter = new PrintWriter(stringWriter);
 
@@ -183,7 +183,7 @@ class RateLimitInterceptorTest {
 
   @Test
   @DisplayName("Should handle afterCompletion cleanup without errors")
-  throws Exception {
+  void testAfterCompletionCleanup() throws Exception {
     when(request.getRemoteAddr()).thenReturn("192.168.1.1");
     when(request.getHeader("X-Forwarded-For")).thenReturn(null);
 

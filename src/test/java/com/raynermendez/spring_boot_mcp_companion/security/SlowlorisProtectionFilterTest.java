@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +59,7 @@ class SlowlorisProtectionFilterTest {
 
   @Test
   @DisplayName("Should reject multiple requests without Content-Length from same IP")
-  throws Exception {
+  void testRejectMultipleRequestsWithoutContentLength() throws Exception {
     when(request.getRemoteAddr()).thenReturn("192.168.1.1");
     when(request.getContentLength()).thenReturn(-1); // Missing Content-Length
 

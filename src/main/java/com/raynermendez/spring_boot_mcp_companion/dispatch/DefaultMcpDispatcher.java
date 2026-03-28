@@ -45,9 +45,10 @@ public class DefaultMcpDispatcher implements McpDispatcher {
 
   @Override
   public McpToolResult dispatchTool(String name, Map<String, Object> arguments) {
+    McpToolDefinition toolDef = null;
     try {
       // Look up the tool by name
-      McpToolDefinition toolDef =
+      toolDef =
           registry.getTools().stream()
               .filter(t -> t.name().equals(name))
               .findFirst()
