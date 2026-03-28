@@ -32,29 +32,34 @@ public class MyApplication {
 }
 ```
 
-## 3️⃣ Create a Service
+## 3️⃣ Create a Controller
 
-Add annotations to your service methods:
+Add MCP annotations to your `@RestController` methods:
 
 ```java
-@Service
-public class OrderService {
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
 
-    // Expose as a callable tool
+    @Autowired
+    private OrderRepository orderRepository;
+
+    // REST endpoint + MCP tool (dual-purpose method)
+    @GetMapping("/{orderId}")
     @McpTool(description = "Get order by ID")
-    public Order getOrder(@McpInput(required = true) String orderId) {
-        return new Order(orderId, "Widget", new BigDecimal("99.99"), "COMPLETED");
+    public Order getOrder(@PathVariable @McpInput String orderId) {
+        return orderRepository.findById(orderId).orElseThrow();
     }
 
-    // Expose as a URI resource
+    // MCP resource
     @McpResource(uri = "order://{id}", description = "Order resource")
-    public Order getOrderResource(@McpInput(required = true) String id) {
+    public Order getOrderResource(@McpInput String id) {
         return getOrder(id);
     }
 
-    // Expose as a prompt template
-    @McpPrompt(name = "summary", description = "Order summary")
-    public String generateSummary(@McpInput(required = true) String orderId) {
+    // MCP prompt (no REST endpoint)
+    @McpPrompt(name = "summary", description = "Generate order summary")
+    public String generateSummary(@McpInput String orderId) {
         Order order = getOrder(orderId);
         return "Order: " + order.getId() + " - $" + order.getPrice();
     }

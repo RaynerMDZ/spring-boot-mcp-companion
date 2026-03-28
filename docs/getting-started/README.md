@@ -21,24 +21,29 @@ public class MyApplication {
 }
 ```
 
-Then annotate your service methods:
+Then annotate your controller methods:
 
 ```java
-@Service
-public class OrderService {
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
 
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @GetMapping("/{orderId}")
     @McpTool(description = "Get order by ID")
-    public Order getOrder(@McpInput(required = true) String orderId) {
+    public Order getOrder(@PathVariable @McpInput String orderId) {
         return orderRepository.findById(orderId).orElseThrow();
     }
 
     @McpResource(uri = "order://{id}", description = "Order resource")
-    public Order getOrderResource(@McpInput(required = true) String id) {
+    public Order getOrderResource(@McpInput String id) {
         return getOrder(id);
     }
 
     @McpPrompt(name = "summary", description = "Generate order summary")
-    public String generateSummary(@McpInput(required = true) String orderId) {
+    public String generateSummary(@McpInput String orderId) {
         Order order = getOrder(orderId);
         return "Order: " + order.getId() + " - $" + order.getPrice();
     }

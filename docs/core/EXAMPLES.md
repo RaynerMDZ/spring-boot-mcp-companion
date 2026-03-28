@@ -1,5 +1,9 @@
 # Examples - Spring Boot MCP Companion
 
+**Best Practice:** Use `@McpTool`, `@McpResource`, and `@McpPrompt` annotations on your `@RestController` classes. This keeps all HTTP-facing methods (both REST and MCP) in one place and follows Spring conventions.
+
+---
+
 ## Example 1: Order Management Service
 
 A complete example showing all three MCP capability types.
@@ -19,25 +23,27 @@ public record Order(
 ) {}
 ```
 
-### Service
+### Controller
 
 ```java
-import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.*;
 import com.raynermendez.spring_boot_mcp_companion.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Service
-public class OrderService {
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
     private final OrderRepository orderRepository;
 
-    public OrderService(OrderRepository orderRepository) {
+    public OrderController(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
     }
 
     /**
      * Creates a new order in the system.
-     * Tool: Callable function to create orders
+     * MCP Tool: Callable function to create orders
      */
     @McpTool(description = "Create a new order with the given details")
     public Order createOrder(

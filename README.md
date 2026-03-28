@@ -18,16 +18,21 @@ public class MyApplication {
     }
 }
 
-@Service
-public class OrderService {
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @GetMapping("/{orderId}")
     @McpTool(description = "Get order by ID")
-    public Order getOrder(@McpInput String orderId) {
+    public Order getOrder(@PathVariable @McpInput String orderId) {
         return orderRepository.findById(orderId).orElseThrow();
     }
 }
 ```
 
-Done! Your methods are now accessible via JSON-RPC 2.0 MCP endpoints.
+Done! Your controller methods are now accessible via REST and MCP endpoints.
 
 ## ✨ Key Features
 
