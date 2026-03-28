@@ -52,8 +52,8 @@ const app = {
     allDocuments: [],
     searchIndex: [],
     isDarkMode: localStorage.getItem('darkMode') === 'true',
-    // Detect if we're in web subdirectory or docs root
-    baseUrl: window.location.pathname.includes('/web/') ? '../' : ''
+    // The website is always in docs/web/, so markdown files are at ../
+    baseUrl: '../'
 };
 
 // Initialize
@@ -274,22 +274,20 @@ async function loadPage(id, filePath, title) {
 
     } catch (error) {
         console.error('Error loading page:', error);
-        const helpText = window.location.pathname.includes('/web/')
-            ? `<p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">
-                <strong>⚠️ Server must be run from the <code>docs/</code> directory:</strong><br>
-                <code>cd docs && python3 -m http.server 8000</code><br>
-                Then visit <code>http://localhost:8000/web/</code>
-              </p>`
-            : '';
-
         contentDiv.innerHTML = `
             <div style="padding: 2rem; text-align: center;">
-                <h2>Error Loading Documentation</h2>
-                <p>${error.message}</p>
-                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">
-                    Trying to load: <code>${app.baseUrl}${filePath}</code>
+                <h2>⚠️ Error Loading Documentation</h2>
+                <p style="color: var(--color-error);">Failed to load: <code>${filePath}</code></p>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 2rem; line-height: 1.8;">
+                    <strong>📝 Setup Instructions:</strong><br><br>
+                    The documentation server must be run from the <code>docs/</code> directory:<br><br>
+                    <code style="background: var(--bg-secondary); padding: 0.5rem 1rem; border-radius: 0.375rem; display: inline-block; margin: 1rem 0;">
+                        cd docs<br>
+                        python3 -m http.server 8000
+                    </code><br><br>
+                    Then visit: <a href="http://localhost:8000/web/" style="color: var(--color-primary);">http://localhost:8000/web/</a><br>
+                    (Note the <code>/web/</code> path)
                 </p>
-                ${helpText}
             </div>
         `;
     }
