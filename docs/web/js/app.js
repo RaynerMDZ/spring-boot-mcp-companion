@@ -52,7 +52,8 @@ const app = {
     allDocuments: [],
     searchIndex: [],
     isDarkMode: localStorage.getItem('darkMode') === 'true',
-    baseUrl: '../' // Base URL for loading markdown files from docs/web/
+    // Detect if we're in web subdirectory or docs root
+    baseUrl: window.location.pathname.includes('/web/') ? '../' : ''
 };
 
 // Initialize
@@ -273,13 +274,22 @@ async function loadPage(id, filePath, title) {
 
     } catch (error) {
         console.error('Error loading page:', error);
+        const helpText = window.location.pathname.includes('/web/')
+            ? `<p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">
+                <strong>⚠️ Server must be run from the <code>docs/</code> directory:</strong><br>
+                <code>cd docs && python3 -m http.server 8000</code><br>
+                Then visit <code>http://localhost:8000/web/</code>
+              </p>`
+            : '';
+
         contentDiv.innerHTML = `
             <div style="padding: 2rem; text-align: center;">
                 <h2>Error Loading Documentation</h2>
                 <p>${error.message}</p>
                 <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">
-                    Check that the file exists at: <code>${app.baseUrl}${filePath}</code>
+                    Trying to load: <code>${app.baseUrl}${filePath}</code>
                 </p>
+                ${helpText}
             </div>
         `;
     }

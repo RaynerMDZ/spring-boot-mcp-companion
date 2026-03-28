@@ -6,26 +6,35 @@ This documentation website is a lightweight, static HTML/CSS/JavaScript applicat
 
 ### Using Python (Recommended)
 
+**IMPORTANT: Serve from the `docs/` directory, not `docs/web/`:**
+
 ```bash
-cd docs/web
+cd docs
 python3 -m http.server 8000
 ```
 
-Then visit `http://localhost:8000` in your browser.
+Then visit `http://localhost:8000/web/` in your browser.
 
 ### Using Node.js
 
 ```bash
-cd docs/web
+cd docs
 npx http-server
+# Visit http://localhost:8080/web/
 ```
 
 ### Using Ruby
 
 ```bash
-cd docs/web
+cd docs
 ruby -run -ehttpd . -p8000
+# Visit http://localhost:8000/web/
 ```
+
+### Why serve from `docs/`?
+The website needs to access markdown files from the docs directory (e.g., `../getting-started/QUICK_START.md`).
+When serving from `docs/web/`, relative paths cannot escape the directory for security reasons.
+Serving from `docs/` allows the website to load all documentation files correctly.
 
 ## Production Deployment Options
 
