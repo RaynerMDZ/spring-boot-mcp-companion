@@ -98,8 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 
 #### Supported Java Versions
-- Java 25 (tested and verified)
 - Java 17+ (minimum Spring Boot 4.0.5 requirement)
+- Java 21+ (also tested and recommended)
 
 #### Supported Spring Boot Versions
 - Spring Boot 4.0.5 (tested and verified)

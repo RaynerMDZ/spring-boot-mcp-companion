@@ -450,10 +450,10 @@ spring:
    </parent>
    ```
 
-2. **Java version 25+**
+2. **Java version 17+**
    ```xml
    <properties>
-       <java.version>25</java.version>
+       <java.version>17</java.version>
    </properties>
    ```
 

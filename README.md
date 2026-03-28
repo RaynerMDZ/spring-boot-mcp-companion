@@ -4,7 +4,7 @@ A lightweight, production-ready annotation-driven framework for integrating the 
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.raynermendez/spring-boot-mcp-companion-core)](https://central.sonatype.com/artifact/com.raynermendez/spring-boot-mcp-companion-core)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Java](https://img.shields.io/badge/java-25+-green.svg)](https://adoptopenjdk.net/)
+[![Java](https://img.shields.io/badge/java-17+-green.svg)](https://adoptopenjdk.net/)
 [![Spring Boot](https://img.shields.io/badge/spring%20boot-4.0.5+-green.svg)](https://spring.io/projects/spring-boot)
 
 ## Quick Start

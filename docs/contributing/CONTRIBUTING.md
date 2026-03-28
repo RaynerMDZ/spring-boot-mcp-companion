@@ -36,7 +36,7 @@ Actual: Empty tools array returned
 
 Environment:
 - OS: macOS 14.2
-- Java: 25.0.2
+- Java: 17.0.x
 - Spring Boot: 4.0.5
 ```
 
@@ -297,7 +297,7 @@ git push origin feature/amazing-feature
 ## Development Setup
 
 ### Prerequisites
-- Java 25+
+- Java 17+
 - Maven 3.8+
 - Git
 
@@ -326,13 +326,13 @@ curl http://localhost:8080/mcp/server-info
 **IntelliJ IDEA:**
 1. Open project
 2. Right-click `pom.xml` → Add as Maven Project
-3. Configure SDK: Settings → Project → SDK (Java 25)
+3. Configure SDK: Settings → Project → SDK (Java 17+)
 4. Enable annotation processing: Settings → Build → Annotation Processors
 
 **Eclipse:**
 1. Import as Maven project
 2. Right-click project → Maven → Update Project
-3. Configure Java 25 compiler
+3. Configure Java 17+ compiler
 
 **Visual Studio Code:**
 - Install "Extension Pack for Java"
