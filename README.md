@@ -101,24 +101,32 @@ implementation 'com.raynermendez:spring-boot-mcp-companion-core:1.0.0'
 
 ### Configuration
 
-Control MCP behavior via `application.yml`:
+The MCP server runs on a **separate embedded server** from your main Spring Boot application:
 
 ```yaml
 server:
-  port: 8090                    # MCP server port (default: 8090)
+  port: 8080                    # Your main API server (default: 8080)
 
 mcp:
   server:
     enabled: true               # Enable/disable MCP (default: true)
-    port: 8090                  # MCP port (mirrors server.port, default: 8090)
+    port: 8090                  # MCP server port - SEPARATE from server.port (default: 8090)
     name: "My Service"          # Server name
     version: "1.0.0"            # Server version
     base-path: /mcp             # Endpoint prefix (default: /mcp)
 ```
 
+This architecture allows:
+- Main API on port 8080, MCP on port 8090
+- Independent scaling and configuration
+- Separate security policies per server
+- Isolated monitoring and logging
+
 ### MCP Endpoints
 
-All endpoints use JSON-RPC 2.0 format on **port 8090** (configurable):
+All endpoints use JSON-RPC 2.0 format on the MCP server port (**port 8090** by default, configurable):
+
+**Note:** MCP endpoints are on a separate embedded server from your main application.
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
@@ -129,6 +137,8 @@ All endpoints use JSON-RPC 2.0 format on **port 8090** (configurable):
 | POST | `http://localhost:8090/mcp/resources/read` | Read a resource |
 | POST | `http://localhost:8090/mcp/prompts/list` | List available prompts |
 | POST | `http://localhost:8090/mcp/prompts/get` | Get a prompt with arguments |
+
+Your main application API remains on `http://localhost:8080` (or whatever `server.port` is configured)
 
 ## 📋 Common Tasks
 

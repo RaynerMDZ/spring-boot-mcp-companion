@@ -527,47 +527,51 @@ Get a prompt template with arguments.
 
 **Property:** `server.port`
 - **Type:** integer
-- **Default:** 8090
-- **Description:** Port for MCP server endpoints
+- **Default:** 8080
+- **Description:** Your main Spring Boot application server port
 
 **Property:** `mcp.server.enabled`
 - **Type:** boolean
 - **Default:** true
-- **Description:** Enable/disable MCP endpoints globally
+- **Description:** Enable/disable MCP embedded server
 
 **Property:** `mcp.server.port`
 - **Type:** integer
 - **Default:** 8090
-- **Description:** MCP server port (mirrors server.port)
+- **Description:** MCP server port (**SEPARATE** from server.port)
 
 **Property:** `mcp.server.name`
 - **Type:** String
 - **Default:** "spring-boot-mcp-companion"
-- **Description:** Server name returned by server-info endpoint
+- **Description:** Server name returned by MCP server-info endpoint
 
 **Property:** `mcp.server.version`
 - **Type:** String
 - **Default:** "1.0.0"
-- **Description:** Server version
+- **Description:** MCP server version
 
 **Property:** `mcp.server.base-path`
 - **Type:** String
 - **Default:** "/mcp"
-- **Description:** Base path for all MCP endpoints
+- **Description:** Base path for MCP endpoints on the MCP server
 
 **Example Configuration:**
 ```yaml
 server:
-  port: 8090                  # MCP server port (default: 8090)
+  port: 8080                              # Main application API server
 
 mcp:
   server:
     enabled: true
-    port: 8090
+    port: 8090                            # MCP server (separate, independent)
     name: "Order Service"
     version: "2.0.0"
-    base-path: /api/mcp
+    base-path: /mcp
 ```
+
+**Architecture:**
+- Main app API: `http://localhost:8080/*` (Spring Boot server)
+- MCP endpoints: `http://localhost:8090/mcp/*` (Separate embedded server)
 
 ---
 

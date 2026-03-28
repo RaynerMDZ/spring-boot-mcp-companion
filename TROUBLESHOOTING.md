@@ -106,36 +106,52 @@ curl -X POST http://localhost:8080/mcp/tools/call \
 
 ### 3. Port Already in Use
 
-**Symptom:** Application won't start; error says port 8090 is already in use.
+**Symptom:** Application won't start; error says port 8080 or 8090 is already in use.
+
+**Remember:** MCP runs on a SEPARATE port from your main application.
 
 **Solution:**
 
-1. **Change the MCP port**
+1. **Port 8080 in use (Main application)**
    ```yaml
    server:
-     port: 8091              # Use a different port
+     port: 8081              # Use a different port for main app
+   ```
 
+2. **Port 8090 in use (MCP server)**
+   ```yaml
    mcp:
      server:
-       port: 8091            # Must match server.port
+       port: 8091            # Use a different MCP port
    ```
 
-2. **Kill the process using the port**
-   ```bash
-   # Find process on port 8090
-   lsof -i :8090
-
-   # Kill it (replace PID with actual process ID)
-   kill -9 <PID>
+3. **Both ports in use**
+   ```yaml
+   server:
+     port: 8082              # Main app on different port
+   mcp:
+     server:
+       port: 8091            # MCP on different port
    ```
 
-3. **Check what's using the port**
+4. **Check what's using the port**
    ```bash
    # macOS/Linux
+   lsof -i :8080
    lsof -i :8090
 
    # Windows
+   netstat -ano | findstr :8080
    netstat -ano | findstr :8090
+   ```
+
+5. **Kill the process using the port**
+   ```bash
+   # macOS/Linux (replace PID with actual process ID)
+   kill -9 <PID>
+
+   # Windows (replace PID with actual process ID)
+   taskkill /PID <PID> /F
    ```
 
 ---
@@ -455,22 +471,34 @@ spring:
 
 ### 12. Testing MCP Endpoints
 
-**MCP server runs on port 8090 by default**
+**Architecture:**
+- Main app: `http://localhost:8080` (server.port)
+- MCP server: `http://localhost:8090` (mcp.server.port) - SEPARATE embedded server
 
 ```bash
-# Test tool list
+# Test MCP tool list (port 8090)
 curl -X POST http://localhost:8090/mcp/tools/list \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'
 
-# Test server info
+# Test MCP server info
 curl http://localhost:8090/mcp/server-info
 
-# Test health
-curl http://localhost:8090/actuator/health
+# Test your main API (port 8080)
+curl http://localhost:8080/api/your-endpoint
 
-# If using a different port
-curl http://localhost:<YOUR_PORT>/mcp/server-info
+# If using custom ports
+curl http://localhost:<MCP_PORT>/mcp/server-info
+curl http://localhost:<APP_PORT>/api/your-endpoint
+```
+
+**Common mistakes:**
+```bash
+# ❌ Wrong - using main app port for MCP
+curl http://localhost:8080/mcp/tools/list    # Will fail
+
+# ✅ Correct - using MCP port for MCP
+curl http://localhost:8090/mcp/tools/list    # Will work
 ```
 
 Use [tools list endpoint debug](#12-testing-mcp-endpoints) to verify setup.

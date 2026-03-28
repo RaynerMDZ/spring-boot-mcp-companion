@@ -481,21 +481,31 @@ public List<Order> searchOrdersByCustomer(
 
 ## 10. Production Deployment
 
-### Configure Port
+### Configure Separate Ports
 
-Set MCP server port in production:
+MCP runs on a separate embedded server. Configure both ports in production:
 
 ```yaml
 # application-prod.yml
 server:
-  port: 8090                    # MCP server port
+  port: 8080                    # Main application API port
 
 mcp:
   server:
     enabled: true
-    port: 8090
+    port: 8090                  # MCP server port (separate server)
     name: "Order Service"
     version: "1.0.0"
+```
+
+**In production with load balancing:**
+```yaml
+server:
+  port: 8080                    # Main API (routed through load balancer)
+
+mcp:
+  server:
+    port: 8090                  # MCP (can route separately or through LB)
 ```
 
 ### Enable Security

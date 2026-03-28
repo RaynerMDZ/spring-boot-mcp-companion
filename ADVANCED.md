@@ -2,33 +2,58 @@
 
 ## Port Configuration
 
-### Configure MCP Server Port
+### Separate Server Architecture
 
-The MCP server runs on the Spring Boot server port (default 8090):
+The MCP framework runs on a **completely separate embedded server** from your main Spring Boot application:
 
 ```yaml
 # application.yml
 server:
-  port: 8090                    # MCP endpoints run here
+  port: 8080                    # Your main application (API, REST endpoints, etc.)
 
 mcp:
   server:
     enabled: true
-    port: 8090                  # Mirrors server.port
+    port: 8090                  # MCP server (SEPARATE embedded Tomcat instance)
     base-path: /mcp
 ```
 
-### Different Port per Environment
+**Architecture:**
+- Port 8080: Main Spring Boot application (your code, controllers, services)
+- Port 8090: MCP server (isolated, independent)
+
+### Configure Ports per Environment
 
 ```yaml
 # application-dev.yml
 server:
-  port: 8090
+  port: 8080
+mcp:
+  server:
+    port: 8090
+
+# application-staging.yml
+server:
+  port: 8080
+mcp:
+  server:
+    port: 9090                  # Different MCP port for staging
 
 # application-prod.yml
 server:
-  port: 9090                    # Different port for production
+  port: 9000                    # Different port for production API
+mcp:
+  server:
+    port: 9001                  # Different MCP port
 ```
+
+### Benefits of Separate Servers
+
+1. **Independent Scaling** - Scale MCP and API independently
+2. **Separate Security** - Different authentication/authorization per server
+3. **Isolated Monitoring** - Monitor each server separately
+4. **Dedicated Resources** - Allocate resources per server
+5. **Better Isolation** - MCP errors don't affect main app
 
 ---
 

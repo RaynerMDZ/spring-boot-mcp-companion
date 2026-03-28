@@ -179,33 +179,42 @@ curl -X POST http://localhost:8080/mcp/tools/call \
 
 ### ✅ Flexible Configuration
 
-Control MCP behavior via YAML configuration:
+Control MCP behavior via YAML configuration. MCP runs on a **separate embedded server**:
 
 ```yaml
 server:
-  port: 8090                  # MCP server port (default: 8090)
+  port: 8080                  # Main application port
 
 mcp:
   server:
-    enabled: true
-    port: 8090
+    enabled: true             # Enable MCP (default: true)
+    port: 8090                # MCP server port (default: 8090)
     name: "Order Service"
     version: "1.0.0"
     base-path: /mcp
 ```
 
-Enable/disable per environment:
+**Per environment configuration:**
 ```yaml
-# application-prod.yml
+# application-dev.yml
 server:
-  port: 9090                  # Use different port in production
+  port: 8080
 mcp:
   server:
     enabled: true
+    port: 8090
+
+# application-prod.yml
+server:
+  port: 8080                  # Different ports per environment
+mcp:
+  server:
+    enabled: true
+    port: 9090
 
 # application-test.yml
 server:
-  port: 8090
+  port: 8080
 mcp:
   server:
     enabled: false            # Disable MCP in tests

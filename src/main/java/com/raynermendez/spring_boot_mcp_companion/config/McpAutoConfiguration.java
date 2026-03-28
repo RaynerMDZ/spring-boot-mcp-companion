@@ -10,7 +10,6 @@ import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry
 import com.raynermendez.spring_boot_mcp_companion.scanner.McpAnnotationScanner;
 import com.raynermendez.spring_boot_mcp_companion.spi.DefaultMcpOutputSerializer;
 import com.raynermendez.spring_boot_mcp_companion.spi.McpOutputSerializer;
-import com.raynermendez.spring_boot_mcp_companion.transport.McpTransportController;
 import com.raynermendez.spring_boot_mcp_companion.validation.DefaultMcpInputValidator;
 import com.raynermendez.spring_boot_mcp_companion.validation.McpInputValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,11 +88,27 @@ public class McpAutoConfiguration {
     return new McpAnnotationScanner(registry, mappingEngine);
   }
 
+  /**
+   * Creates a separate embedded Tomcat server for MCP endpoints on a distinct port.
+   *
+   * <p>This allows the MCP server to run independently from the main Spring Boot application.
+   * For example:
+   * - Main app API runs on port 8080 (server.port)
+   * - MCP server runs on port 8090 (mcp.server.port)
+   *
+   * <p>The MCP controller is registered ONLY on the embedded server, not on the main
+   * application server, ensuring complete isolation between the two.
+   *
+   * @param dispatcher the MCP dispatcher
+   * @param registry the MCP definition registry
+   * @param properties MCP server properties (port configuration)
+   * @return embedded MCP server instance
+   */
   @Bean
-  public McpTransportController mcpTransportController(
+  public McpEmbeddedServer mcpEmbeddedServer(
       McpDispatcher dispatcher,
       McpDefinitionRegistry registry,
       McpServerProperties properties) {
-    return new McpTransportController(dispatcher, registry, properties);
+    return new McpEmbeddedServer(dispatcher, registry, properties);
   }
 }

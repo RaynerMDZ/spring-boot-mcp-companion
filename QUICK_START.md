@@ -69,7 +69,8 @@ mvn spring-boot:run
 
 ## 5️⃣ Test MCP Endpoints
 
-**MCP server runs on port 8090 by default**
+**MCP runs on a SEPARATE server on port 8090 (configurable)**
+**Your main application API runs on port 8080 (configurable via server.port)**
 
 ### List Tools
 ```bash
