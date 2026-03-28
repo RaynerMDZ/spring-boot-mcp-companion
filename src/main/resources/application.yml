@@ -2,10 +2,14 @@ spring:
   application:
     name: spring-boot-mcp-companion
 
+server:
+  port: 8090  # MCP server default port
+
 # MCP Server Configuration (uncomment to customize)
 # mcp:
 #   server:
 #     enabled: true          # Enable/disable MCP server (default: true)
+#     port: 8090             # Port for MCP endpoints (default: 8090, mirrors server.port)
 #     base-path: /mcp        # Base path for MCP endpoints (default: /mcp)
 #     name: spring-boot-mcp  # Server name for MCP server-info
 #     version: 1.0.0         # Server version for MCP server-info

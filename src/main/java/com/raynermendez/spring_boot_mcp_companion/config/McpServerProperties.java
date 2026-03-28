@@ -14,6 +14,7 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding;
  * mcp.server.enabled=true
  * mcp.server.name=my-mcp-server
  * mcp.server.version=1.0.0
+ * mcp.server.port=8090
  * mcp.server.basePath=/api/mcp
  * }</pre>
  */
@@ -35,6 +36,11 @@ public record McpServerProperties(
      */
     String version,
     /**
+     * Port for MCP server endpoints.
+     * Defaults to 8090.
+     */
+    int port,
+    /**
      * Base path for all MCP endpoints (e.g., /api/mcp).
      * Defaults to "/mcp".
      */
@@ -46,6 +52,7 @@ public record McpServerProperties(
    * @param enabled whether the MCP server is enabled
    * @param name the server name
    * @param version the server version
+   * @param port the port number
    * @param basePath the base path for endpoints
    */
   @ConstructorBinding
@@ -53,10 +60,12 @@ public record McpServerProperties(
       boolean enabled,
       String name,
       String version,
+      int port,
       String basePath) {
     this.enabled = enabled;
     this.name = name != null ? name : "spring-boot-mcp-companion";
     this.version = version != null ? version : "1.0.0";
+    this.port = port > 0 ? port : 8090;
     this.basePath = basePath != null ? basePath : "/mcp";
   }
 }

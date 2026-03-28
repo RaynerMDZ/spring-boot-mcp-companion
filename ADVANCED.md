@@ -1,5 +1,37 @@
 # Advanced Usage - Spring Boot MCP Companion
 
+## Port Configuration
+
+### Configure MCP Server Port
+
+The MCP server runs on the Spring Boot server port (default 8090):
+
+```yaml
+# application.yml
+server:
+  port: 8090                    # MCP endpoints run here
+
+mcp:
+  server:
+    enabled: true
+    port: 8090                  # Mirrors server.port
+    base-path: /mcp
+```
+
+### Different Port per Environment
+
+```yaml
+# application-dev.yml
+server:
+  port: 8090
+
+# application-prod.yml
+server:
+  port: 9090                    # Different port for production
+```
+
+---
+
 ## Spring Security Integration
 
 ### Authenticate MCP Endpoints

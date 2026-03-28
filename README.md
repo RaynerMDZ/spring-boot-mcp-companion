@@ -104,27 +104,31 @@ implementation 'com.raynermendez:spring-boot-mcp-companion-core:1.0.0'
 Control MCP behavior via `application.yml`:
 
 ```yaml
+server:
+  port: 8090                    # MCP server port (default: 8090)
+
 mcp:
   server:
-    enabled: true                 # Enable/disable MCP (default: true)
-    name: "My Service"            # Server name
-    version: "1.0.0"              # Server version
-    base-path: /mcp               # Endpoint prefix (default: /mcp)
+    enabled: true               # Enable/disable MCP (default: true)
+    port: 8090                  # MCP port (mirrors server.port, default: 8090)
+    name: "My Service"          # Server name
+    version: "1.0.0"            # Server version
+    base-path: /mcp             # Endpoint prefix (default: /mcp)
 ```
 
 ### MCP Endpoints
 
-All endpoints use JSON-RPC 2.0 format:
+All endpoints use JSON-RPC 2.0 format on **port 8090** (configurable):
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| GET | `/mcp/server-info` | Server metadata |
-| POST | `/mcp/tools/list` | List available tools |
-| POST | `/mcp/tools/call` | Call a tool with arguments |
-| POST | `/mcp/resources/list` | List available resources |
-| POST | `/mcp/resources/read` | Read a resource |
-| POST | `/mcp/prompts/list` | List available prompts |
-| POST | `/mcp/prompts/get` | Get a prompt with arguments |
+| GET | `http://localhost:8090/mcp/server-info` | Server metadata |
+| POST | `http://localhost:8090/mcp/tools/list` | List available tools |
+| POST | `http://localhost:8090/mcp/tools/call` | Call a tool with arguments |
+| POST | `http://localhost:8090/mcp/resources/list` | List available resources |
+| POST | `http://localhost:8090/mcp/resources/read` | Read a resource |
+| POST | `http://localhost:8090/mcp/prompts/list` | List available prompts |
+| POST | `http://localhost:8090/mcp/prompts/get` | Get a prompt with arguments |
 
 ## 📋 Common Tasks
 

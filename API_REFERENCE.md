@@ -265,7 +265,7 @@ Get server metadata and capabilities.
 
 **Request:**
 ```bash
-curl http://localhost:8080/mcp/server-info
+curl http://localhost:8090/mcp/server-info
 ```
 
 **Response:**
@@ -525,10 +525,20 @@ Get a prompt template with arguments.
 
 ## Configuration Properties
 
+**Property:** `server.port`
+- **Type:** integer
+- **Default:** 8090
+- **Description:** Port for MCP server endpoints
+
 **Property:** `mcp.server.enabled`
 - **Type:** boolean
 - **Default:** true
 - **Description:** Enable/disable MCP endpoints globally
+
+**Property:** `mcp.server.port`
+- **Type:** integer
+- **Default:** 8090
+- **Description:** MCP server port (mirrors server.port)
 
 **Property:** `mcp.server.name`
 - **Type:** String
@@ -547,9 +557,13 @@ Get a prompt template with arguments.
 
 **Example Configuration:**
 ```yaml
+server:
+  port: 8090                  # MCP server port (default: 8090)
+
 mcp:
   server:
     enabled: true
+    port: 8090
     name: "Order Service"
     version: "2.0.0"
     base-path: /api/mcp

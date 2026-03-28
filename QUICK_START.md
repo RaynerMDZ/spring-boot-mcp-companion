@@ -69,16 +69,18 @@ mvn spring-boot:run
 
 ## 5️⃣ Test MCP Endpoints
 
+**MCP server runs on port 8090 by default**
+
 ### List Tools
 ```bash
-curl -X POST http://localhost:8080/mcp/tools/list \
+curl -X POST http://localhost:8090/mcp/tools/list \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'
 ```
 
 ### Call a Tool
 ```bash
-curl -X POST http://localhost:8080/mcp/tools/call \
+curl -X POST http://localhost:8090/mcp/tools/call \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -93,7 +95,7 @@ curl -X POST http://localhost:8080/mcp/tools/call \
 
 ### List Prompts
 ```bash
-curl -X POST http://localhost:8080/mcp/prompts/list \
+curl -X POST http://localhost:8090/mcp/prompts/list \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc": "2.0", "id": 1, "method": "prompts/list"}'
 ```

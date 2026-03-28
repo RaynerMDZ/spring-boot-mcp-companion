@@ -481,6 +481,23 @@ public List<Order> searchOrdersByCustomer(
 
 ## 10. Production Deployment
 
+### Configure Port
+
+Set MCP server port in production:
+
+```yaml
+# application-prod.yml
+server:
+  port: 8090                    # MCP server port
+
+mcp:
+  server:
+    enabled: true
+    port: 8090
+    name: "Order Service"
+    version: "1.0.0"
+```
+
 ### Enable Security
 
 Always use Spring Security in production:
