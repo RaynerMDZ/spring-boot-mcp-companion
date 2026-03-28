@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Boot MCP Companion - Documentation</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>Spring Boot MCP Companion</h1>
+                    <p class="subtitle">Documentation</p>
+                </div>
+                <div class="header-controls">
+                    <input type="text" id="searchInput" class="search-box" placeholder="Search documentation...">
+                    <button id="themeToggle" class="theme-toggle" title="Toggle theme">🌙</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar">
+                <div class="sidebar-content">
+                    <nav class="nav-menu">
+                        <!-- Navigation items loaded by JavaScript -->
+                    </nav>
+                </div>
+                <div class="sidebar-footer">
+                    <p class="version">v1.0.0</p>
+                </div>
+            </aside>
+
+            <!-- Documentation Content -->
+            <main class="content">
+                <div class="content-header">
+                    <button id="menuToggle" class="menu-toggle" title="Toggle sidebar">☰</button>
+                    <div id="breadcrumb" class="breadcrumb"></div>
+                </div>
+                <article id="docContent" class="doc-content">
+                    <div class="loading">Loading documentation...</div>
+                </article>
+                <div class="content-footer">
+                    <div class="doc-nav">
+                        <button id="prevBtn" class="nav-btn prev-btn" style="display: none;">← Previous</button>
+                        <button id="nextBtn" class="nav-btn next-btn" style="display: none;">Next →</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Search Results Modal -->
+        <div id="searchModal" class="search-modal">
+            <div class="search-modal-content">
+                <div class="search-modal-header">
+                    <h2>Search Results</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
