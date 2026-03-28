@@ -59,20 +59,17 @@ Done! Your methods are now accessible via JSON-RPC 2.0 MCP endpoints.
 
 ## 📖 Documentation
 
-All documentation is organized in the **[docs/](docs/)** folder for easy navigation.
-
 | Document | Purpose |
 |----------|---------|
-| **[docs/index.md](docs/index.md)** | Documentation hub with navigation by role and topic |
-| **[docs/QUICK_START.md](docs/QUICK_START.md)** | Get started in 5 minutes |
-| **[docs/FEATURES.md](docs/FEATURES.md)** | Detailed feature descriptions |
-| **[docs/EXAMPLES.md](docs/EXAMPLES.md)** | Working examples and patterns |
-| **[docs/API_REFERENCE.md](docs/API_REFERENCE.md)** | Complete annotation and endpoint reference |
-| **[docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md)** | Production deployment guidelines |
-| **[docs/ADVANCED.md](docs/ADVANCED.md)** | Custom validation, security, observability |
-| **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** | Common issues and solutions |
-| **[docs/SECURITY.md](docs/SECURITY.md)** | Vulnerability reporting and security info |
-| **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** | How to contribute |
+| **[QUICK_START.md](QUICK_START.md)** | Get started in 5 minutes |
+| **[FEATURES.md](FEATURES.md)** | Detailed feature descriptions |
+| **[EXAMPLES.md](EXAMPLES.md)** | Working examples and patterns |
+| **[API_REFERENCE.md](API_REFERENCE.md)** | Complete annotation and endpoint reference |
+| **[BEST_PRACTICES.md](BEST_PRACTICES.md)** | Production deployment guidelines |
+| **[ADVANCED.md](ADVANCED.md)** | Custom validation, security, observability |
+| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Common issues and solutions |
+| **[SECURITY.md](SECURITY.md)** | Vulnerability reporting and security info |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | How to contribute |
 
 ## 🚀 Installation
 
@@ -162,18 +159,17 @@ public User createUser(
 ```
 
 **Configure with Spring Security:**
-See [docs/ADVANCED.md](docs/ADVANCED.md#spring-security-integration)
+See [ADVANCED.md](ADVANCED.md#spring-security-integration)
 
 **Add observability/metrics:**
-See [docs/ADVANCED.md](docs/ADVANCED.md#observability)
+See [ADVANCED.md](ADVANCED.md#observability)
 
 ## 📚 Learn More
 
 - [What is MCP?](https://modelcontextprotocol.io/) - Official MCP documentation
-- [docs/QUICK_START.md](docs/QUICK_START.md) - 5-minute getting started guide
-- [docs/EXAMPLES.md](docs/EXAMPLES.md) - Order management, document processing, and more
-- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) - Development setup and contribution guidelines
-- **[docs/index.md](docs/index.md)** - Complete documentation hub with navigation by role
+- [QUICK_START.md](QUICK_START.md) - 5-minute getting started guide
+- [EXAMPLES.md](EXAMPLES.md) - Order management, document processing, and more
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development setup and contribution guidelines
 
 ## ⚖️ License
 
@@ -181,10 +177,8 @@ Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ## 🤝 Contributing
 
-We welcome contributions! See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
-**Ready to get started?** → [Quick Start Guide](docs/QUICK_START.md)
-
-**Explore all documentation** → [docs/index.md](docs/index.md)
+**Ready to get started?** → [Quick Start Guide](QUICK_START.md)
