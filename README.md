@@ -1,11 +1,15 @@
 # Spring Boot MCP Companion
 
-A lightweight, production-ready annotation-driven framework for integrating the **Model Context Protocol (MCP)** into Spring Boot applications. Expose your Spring beans as remote-callable functions, resources, and prompts with zero refactoring.
+**A lightweight, production-ready framework for integrating Model Context Protocol (MCP) into Spring Boot applications.**
+
+Expose your Spring services as remote-callable MCP tools with automatic type validation, custom object support, and comprehensive security controls.
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.raynermendez/spring-boot-mcp-companion-core)](https://central.sonatype.com/artifact/com.raynermendez/spring-boot-mcp-companion-core)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/java-17+-green.svg)](https://adoptopenjdk.net/)
 [![Spring Boot](https://img.shields.io/badge/spring%20boot-4.0.5+-green.svg)](https://spring.io/projects/spring-boot)
+[![Tests](https://img.shields.io/badge/Tests-97.4%25%20(225%2F231)-brightgreen.svg)](./TEST_REPORT.md)
+[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](./PRODUCTION_READINESS_REPORT.md)
 
 ## Quick Start
 
