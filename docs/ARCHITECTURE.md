@@ -193,8 +193,7 @@ MCP server ready, listening on port 8090
 DefaultMcpMappingEngine       - Type conversion orchestrator
 ├── JsonSchemaGenerator        - Java type → JSON Schema
 ├── JavaToJsonConverter        - Java object → JSON
-├── JsonToJavaConverter        - JSON → Java object
-├── CustomObjectHandler        - Custom type support via @CustomObject
+├── JsonToJavaConverter        - JSON → Java object (via Jackson)
 └── GenericTypeResolver        - Handle generic types (List<T>, Optional<T>)
 ```
 
@@ -221,15 +220,30 @@ DefaultMcpMappingEngine       - Type conversion orchestrator
 | `enum OrderStatus` | `{"type": "string", "enum": ["PENDING", "COMPLETED"]}` |
 
 **Custom Object Support:**
+
+The framework supports POJOs (Plain Old Java Objects) through Jackson's ObjectMapper:
+
 ```java
-@CustomObject(
-    description = "Order with all details",
-    properties = {
-        @Property(name = "id", type = String.class, description = "Order ID"),
-        @Property(name = "items", type = Item[].class, description = "Ordered items")
-    }
-)
-public class Order { ... }
+public class Order {
+    private String id;
+    private List<Item> items;
+    private BigDecimal total;
+
+    // Jackson requires a no-arg constructor
+    public Order() {}
+
+    // Getters and setters (required for Jackson)
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    // ... more getters/setters
+}
+
+// Usage in a tool:
+@McpTool(description = "Create order")
+public OrderResponse createOrder(@McpInput Order order) {
+    // Jackson automatically converts JSON to Order
+    return new OrderResponse(order.getId(), order.getTotal());
+}
 ```
 
 ### 4. Input Validation Engine
@@ -576,7 +590,7 @@ GlobalExceptionHandler        - Centralized exception handling
 **Special Types:**
 - `Optional<T>` (nullable values)
 - `Enum` (enumeration values)
-- Custom objects via `@CustomObject`
+- Custom POJOs (automatically converted via Jackson)
 - `java.net.URL`, `java.nio.file.Path`
 
 **Nested Objects:**

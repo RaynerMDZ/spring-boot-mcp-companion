@@ -417,7 +417,7 @@ public OrderResponse createOrder(
 - Enums with value constraints
 - Nested objects
 - Optional/nullable handling
-- Custom objects with `@CustomObject` annotation
+- Custom POJOs (automatically converted via Jackson)
 
 ### ✅ Input Validation
 

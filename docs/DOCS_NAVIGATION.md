@@ -161,7 +161,7 @@ docs/
 - `@McpResource` → [API Reference: McpResource](core/API_REFERENCE.md#mcpresource)
 - `@McpPrompt` → [API Reference: McpPrompt](core/API_REFERENCE.md#mcpprompt)
 - `@McpInput` → [API Reference: McpInput](core/API_REFERENCE.md#mcpinput)
-- `@CustomObject` → [Custom Objects](CUSTOM_OBJECTS.md)
+- Custom POJOs → [Custom Objects Guide](CUSTOM_OBJECTS.md) (no annotation needed)
 
 #### Configuration
 
