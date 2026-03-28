@@ -1,0 +1,714 @@
+{
+  "info": {
+    "name": "Spring Boot MCP - AI Agent Simulator",
+    "description": "Postman collection to simulate AI agent interactions with Model Context Protocol endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "mcpBasePath",
+      "value": "/mcp",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "agentName",
+      "value": "Claude-AI-Agent",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Server Information",
+      "item": [
+        {
+          "name": "Get Server Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "{{agentName}}/1.0"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/server-info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "server-info"
+              ]
+            },
+            "description": "Retrieve server metadata and capabilities"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tools",
+      "item": [
+        {
+          "name": "List Available Tools",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{requestId}}\",\n  \"method\": \"tools/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "list"
+              ]
+            },
+            "description": "Get list of available tools the AI agent can call"
+          },
+          "response": []
+        },
+        {
+          "name": "Call Tool - Simple String Parameter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-request-123\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"example_tool\",\n    \"arguments\": {\n      \"message\": \"Hello from AI Agent\",\n      \"userId\": \"user-456\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Call a tool with simple string parameters"
+          },
+          "response": []
+        },
+        {
+          "name": "Call Tool - Numeric Parameters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-request-124\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"calculate_sum\",\n    \"arguments\": {\n      \"numbers\": [10, 20, 30, 40],\n      \"multiplier\": 2.5\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Call a tool with numeric parameters and arrays"
+          },
+          "response": []
+        },
+        {
+          "name": "Call Tool - Complex Object",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-request-125\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"process_order\",\n    \"arguments\": {\n      \"order\": {\n        \"id\": \"ORD-12345\",\n        \"customerId\": \"CUST-789\",\n        \"amount\": 299.99,\n        \"items\": [\n          {\n            \"sku\": \"ITEM-001\",\n            \"quantity\": 2,\n            \"price\": 50.00\n          },\n          {\n            \"sku\": \"ITEM-002\",\n            \"quantity\": 1,\n            \"price\": 199.99\n          }\n        ],\n        \"status\": \"pending\",\n        \"metadata\": {\n          \"source\": \"ai-agent\",\n          \"timestamp\": \"2024-03-28T10:30:00Z\"\n        }\n      }\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Call a tool with complex nested objects (POJO serialization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Call Tool - With Validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-request-126\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"create_user\",\n    \"arguments\": {\n      \"email\": \"user@example.com\",\n      \"password\": \"SecurePass123!\",\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"age\": 30\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Call a tool with validated input parameters"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Resources",
+      "item": [
+        {
+          "name": "List Available Resources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{requestId}}\",\n  \"method\": \"resources/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/resources/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "resources",
+                "list"
+              ]
+            },
+            "description": "Get list of available resources the AI agent can read"
+          },
+          "response": []
+        },
+        {
+          "name": "Read Resource - By URI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-resource-req-1\",\n  \"method\": \"resources/read\",\n  \"params\": {\n    \"uri\": \"file://documents/config.json\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/resources/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "resources",
+                "read"
+              ]
+            },
+            "description": "Read a specific resource using its URI"
+          },
+          "response": []
+        },
+        {
+          "name": "Read Resource - With Parameters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-resource-req-2\",\n  \"method\": \"resources/read\",\n  \"params\": {\n    \"uri\": \"database://users/{userId}\",\n    \"arguments\": {\n      \"userId\": \"user-12345\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/resources/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "resources",
+                "read"
+              ]
+            },
+            "description": "Read a resource with parameters"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Prompts",
+      "item": [
+        {
+          "name": "List Available Prompts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"{{requestId}}\",\n  \"method\": \"prompts/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/prompts/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "prompts",
+                "list"
+              ]
+            },
+            "description": "Get list of available prompt templates"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Prompt - Code Review Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-prompt-req-1\",\n  \"method\": \"prompts/get\",\n  \"params\": {\n    \"name\": \"code_review\",\n    \"arguments\": {\n      \"language\": \"java\",\n      \"focusArea\": \"performance\",\n      \"severity\": \"high\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/prompts/get",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "prompts",
+                "get"
+              ]
+            },
+            "description": "Get a code review prompt template"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Prompt - Documentation Generator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-prompt-req-2\",\n  \"method\": \"prompts/get\",\n  \"params\": {\n    \"name\": \"generate_documentation\",\n    \"arguments\": {\n      \"projectName\": \"Spring Boot MCP Companion\",\n      \"level\": \"beginner\",\n      \"includeExamples\": true\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/prompts/get",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "prompts",
+                "get"
+              ]
+            },
+            "description": "Get a documentation generation prompt template"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "AI Agent Workflows",
+      "item": [
+        {
+          "name": "1. Initialize - Get Server Capabilities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "User-Agent",
+                "value": "{{agentName}}/1.0"
+              },
+              {
+                "key": "X-Agent-ID",
+                "value": "agent-{{requestId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/server-info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "server-info"
+              ]
+            },
+            "description": "Step 1: AI Agent initializes and checks server capabilities"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Discover - List Available Tools",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-discovery-tools\",\n  \"method\": \"tools/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "list"
+              ]
+            },
+            "description": "Step 2: AI Agent discovers what tools are available"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Discover - List Available Resources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-discovery-resources\",\n  \"method\": \"resources/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/resources/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "resources",
+                "list"
+              ]
+            },
+            "description": "Step 3: AI Agent discovers available resources"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Discover - List Available Prompts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-discovery-prompts\",\n  \"method\": \"prompts/list\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/prompts/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "prompts",
+                "list"
+              ]
+            },
+            "description": "Step 4: AI Agent discovers available prompts"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Execute - Call a Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Agent-Decision",
+                "value": "tool_selected"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-execution-1\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"analyze_code\",\n    \"arguments\": {\n      \"code\": \"public class Example { public static void main(String[] args) { System.out.println(\\\"Hello\\\"); } }\",\n      \"language\": \"java\",\n      \"checkSecurityIssues\": true\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Step 5: AI Agent decides to call a tool and executes it"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Context - Read Required Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Agent-Decision",
+                "value": "resource_read\"",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-context-1\",\n  \"method\": \"resources/read\",\n  \"params\": {\n    \"uri\": \"project://config/build.properties\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/resources/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "resources",
+                "read"
+              ]
+            },
+            "description": "Step 6: AI Agent reads a resource to get context"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Reasoning - Get Prompt Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Agent-Reasoning",
+                "value": "use_prompt_template\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-reasoning-1\",\n  \"method\": \"prompts/get\",\n  \"params\": {\n    \"name\": \"problem_solving\",\n    \"arguments\": {\n      \"problem\": \"High latency in API responses\",\n      \"context\": \"Production environment\",\n      \"constraints\": [\"Cannot modify database schema\", \"Limited infrastructure changes\"]\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/prompts/get",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "prompts",
+                "get"
+              ]
+            },
+            "description": "Step 7: AI Agent gets a prompt to help with reasoning"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "item": [
+        {
+          "name": "Error - Invalid Tool Name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-error-1\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"nonexistent_tool\",\n    \"arguments\": {\n      \"param1\": \"value1\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Test error handling when tool doesn't exist"
+          },
+          "response": []
+        },
+        {
+          "name": "Error - Invalid Parameters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-error-2\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"create_user\",\n    \"arguments\": {\n      \"email\": \"invalid-email\",\n      \"age\": \"not-a-number\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Test validation error handling"
+          },
+          "response": []
+        },
+        {
+          "name": "Error - Missing Required Parameters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": \"agent-error-3\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"process_order\",\n    \"arguments\": {\n      \"orderId\": \"ORD-123\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{mcpBasePath}}/tools/call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{mcpBasePath}}",
+                "tools",
+                "call"
+              ]
+            },
+            "description": "Test handling of missing required parameters"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
