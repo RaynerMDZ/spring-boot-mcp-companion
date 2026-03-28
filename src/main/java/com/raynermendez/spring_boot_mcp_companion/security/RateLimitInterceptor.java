@@ -200,15 +200,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     String xForwardedFor = request.getHeader("X-Forwarded-For");
     if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
       // Take the first IP in the list and validate format
-      String firstIp = xForwardedFor.split(",")[0].trim();
+      String[] ips = xForwardedFor.split(",");
+      if (ips.length > 0) {
+        String firstIp = ips[0].trim();
 
-      // Security: Only accept valid IPv4 addresses
-      if (!firstIp.isEmpty() && isValidIpAddress(firstIp)) {
-        return firstIp;
+        // Security: Only accept valid IPv4 addresses
+        if (!firstIp.isEmpty() && isValidIpAddress(firstIp)) {
+          return firstIp;
+        }
+
+        // If invalid format, log and fall back to remote address
+        logger.warn("Invalid X-Forwarded-For header format: {}", xForwardedFor);
       }
-
-      // If invalid format, log and fall back to remote address
-      logger.warn("Invalid X-Forwarded-For header format: {}", xForwardedFor);
     }
 
     // Fall back to remote address

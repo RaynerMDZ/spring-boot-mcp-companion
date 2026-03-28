@@ -57,7 +57,9 @@ public class SlowlorisProtectionFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-    String clientId = httpRequest.getRemoteAddr();
+    String remoteAddr = httpRequest.getRemoteAddr();
+    // Use default if remote address is not available
+    final String clientId = (remoteAddr != null) ? remoteAddr : "UNKNOWN";
     int contentLength = httpRequest.getContentLength();
 
     // Check for potential Slowloris: Request without Content-Length header

@@ -28,16 +28,16 @@ public class EnhancedExceptionSanitizer {
   // Patterns for detecting sensitive data
   private static final Pattern[] SENSITIVE_PATTERNS = {
       // Database connection strings (postgresql, mysql, mongodb, etc.)
-      Pattern.compile("(postgres|mysql|mongodb|oracle|sqlserver)://[^/]+:[^@]+@[^/\\s]+", Pattern.CASE_INSENSITIVE),
+      Pattern.compile("(postgres(ql)?|mysql|mongodb|oracle|sqlserver)://[^/]+:[^@]+@[^/\\s]+", Pattern.CASE_INSENSITIVE),
 
-      // API keys and tokens (common prefixes)
-      Pattern.compile("(api[_-]?key|secret[_-]?key|auth[_-]?token|access[_-]?token|bearer|x-api-key)[:\\s=]+[\\w\\-\\.]+", Pattern.CASE_INSENSITIVE),
+      // API keys and tokens (common prefixes) - match api key/secret key with space
+      Pattern.compile("(api\\s+key|api[_-]?key|secret\\s+key|secret[_-]?key|auth[_-]?token|access[_-]?token|bearer|x-api-key)[:\\s=]+[\\w\\-\\.]+", Pattern.CASE_INSENSITIVE),
 
       // AWS credentials
       Pattern.compile("(AKIA[0-9A-Z]{16})", Pattern.CASE_INSENSITIVE),
 
-      // Private keys
-      Pattern.compile("-----BEGIN (RSA|DSA|EC|PGP|OPENSSH|PRIVATE|PUBLIC) KEY-----", Pattern.CASE_INSENSITIVE),
+      // Private keys (match BEGIN...KEY----- with any keywords in between)
+      Pattern.compile("-----BEGIN [A-Z\\s]+ KEY-----", Pattern.CASE_INSENSITIVE),
 
       // Passwords
       Pattern.compile("(password|passwd|pwd)[:\\s=]+[\\w\\-\\.!@#$%^&*()]+", Pattern.CASE_INSENSITIVE),
@@ -48,8 +48,8 @@ public class EnhancedExceptionSanitizer {
       // Email addresses
       Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"),
 
-      // File paths
-      Pattern.compile("([a-zA-Z]:|/)(?:[^/\\\\]+[/\\\\])*[^/\\\\]+(?:\\.[a-zA-Z0-9]+)?"),
+      // File paths (only match paths with directory separators, not simple filenames)
+      Pattern.compile("(?:[a-zA-Z]:|/)[^\\s:]*[/\\\\][^\\s:]+"),
 
       // Credit card numbers (basic pattern)
       Pattern.compile("\\b\\d{4}[\\s\\-]?\\d{4}[\\s\\-]?\\d{4}[\\s\\-]?\\d{4}\\b"),

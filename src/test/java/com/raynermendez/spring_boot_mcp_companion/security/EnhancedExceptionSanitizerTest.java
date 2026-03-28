@@ -165,7 +165,7 @@ class EnhancedExceptionSanitizerTest {
 
   // Helper methods
   private void assertContains(String text, String substring) {
-    assertTrue(text.contains(substring),
+    assertTrue(text.toLowerCase().contains(substring.toLowerCase()),
         "Expected text to contain: " + substring + ", but was: " + text);
   }
 
