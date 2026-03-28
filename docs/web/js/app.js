@@ -1,101 +1,110 @@
-// Documentation structure
+// Documentation structure with correct paths
 const docStructure = {
     sections: [
         {
             title: 'Getting Started',
             items: [
-                { title: 'Quick Start', path: '../README.md', id: 'quick-start' },
-                { title: 'Project Overview', path: '../getting-started/README.md', id: 'overview' },
-                { title: 'Installation', path: '../getting-started/QUICK_START.md', id: 'installation' },
+                { title: 'Quick Start', path: 'README', id: 'quick-start', file: 'README.md' },
+                { title: 'Installation Guide', path: 'getting-started/QUICK_START', id: 'installation', file: 'getting-started/QUICK_START.md' },
+                { title: 'Project Overview', path: 'getting-started/README', id: 'overview', file: 'getting-started/README.md' },
             ]
         },
         {
-            title: 'Core Documentation',
+            title: 'Core API',
             items: [
-                { title: 'API Reference', path: '../core/API_REFERENCE.md', id: 'api-ref' },
-                { title: 'Features', path: '../core/FEATURES.md', id: 'features' },
-                { title: 'Examples', path: '../core/EXAMPLES.md', id: 'examples' },
+                { title: 'API Reference', path: 'core/API_REFERENCE', id: 'api-ref', file: 'core/API_REFERENCE.md' },
+                { title: 'Features', path: 'core/FEATURES', id: 'features', file: 'core/FEATURES.md' },
+                { title: 'Examples', path: 'core/EXAMPLES', id: 'examples', file: 'core/EXAMPLES.md' },
             ]
         },
         {
-            title: 'Advanced Topics',
+            title: 'Advanced',
             items: [
-                { title: 'Architecture', path: '../ARCHITECTURE.md', id: 'architecture' },
-                { title: 'Custom Objects', path: '../CUSTOM_OBJECTS.md', id: 'custom-objects' },
-                { title: 'MCP Specification', path: '../MCP_SPECIFICATION.md', id: 'mcp-spec' },
+                { title: 'Architecture', path: 'ARCHITECTURE', id: 'architecture', file: 'ARCHITECTURE.md' },
+                { title: 'Custom Objects', path: 'CUSTOM_OBJECTS', id: 'custom-objects', file: 'CUSTOM_OBJECTS.md' },
+                { title: 'MCP Specification', path: 'MCP_SPECIFICATION', id: 'mcp-spec', file: 'MCP_SPECIFICATION.md' },
             ]
         },
         {
             title: 'Production',
             items: [
-                { title: 'Best Practices', path: '../production/BEST_PRACTICES.md', id: 'best-practices' },
-                { title: 'Security Guide', path: '../production/SECURITY.md', id: 'security' },
-                { title: 'Advanced Configuration', path: '../production/ADVANCED.md', id: 'advanced' },
-                { title: 'Troubleshooting', path: '../production/TROUBLESHOOTING.md', id: 'troubleshooting' },
+                { title: 'Best Practices', path: 'production/BEST_PRACTICES', id: 'best-practices', file: 'production/BEST_PRACTICES.md' },
+                { title: 'Security Guide', path: 'production/SECURITY', id: 'security', file: 'production/SECURITY.md' },
+                { title: 'Advanced Configuration', path: 'production/ADVANCED', id: 'advanced', file: 'production/ADVANCED.md' },
+                { title: 'Troubleshooting', path: 'production/TROUBLESHOOTING', id: 'troubleshooting', file: 'production/TROUBLESHOOTING.md' },
             ]
         },
         {
             title: 'Contributing',
             items: [
-                { title: 'Contributing Guidelines', path: '../contributing/CONTRIBUTING.md', id: 'contributing' },
-                { title: 'Changelog', path: '../contributing/CHANGELOG.md', id: 'changelog' },
-                { title: 'License Analysis', path: '../contributing/LICENSE_ANALYSIS.md', id: 'license' },
+                { title: 'Contributing Guidelines', path: 'contributing/CONTRIBUTING', id: 'contributing', file: 'contributing/CONTRIBUTING.md' },
+                { title: 'Changelog', path: 'contributing/CHANGELOG', id: 'changelog', file: 'contributing/CHANGELOG.md' },
+                { title: 'License Analysis', path: 'contributing/LICENSE_ANALYSIS', id: 'license', file: 'contributing/LICENSE_ANALYSIS.md' },
             ]
         }
     ]
 };
 
-// App state
+// App State
 const app = {
     currentPage: null,
     documentCache: new Map(),
     allDocuments: [],
     searchIndex: [],
-    isDarkMode: localStorage.getItem('darkMode') === 'true'
+    isDarkMode: localStorage.getItem('darkMode') === 'true',
+    baseUrl: '../' // Base URL for loading markdown files from docs/web/
 };
 
-// Initialize app
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     buildNavigation();
     setupEventListeners();
-    loadInitialPage();
+    showHeroSection();
     buildSearchIndex();
 });
 
 /**
- * Initialize theme based on user preference
+ * Initialize theme
  */
 function initializeTheme() {
     if (app.isDarkMode) {
         document.body.classList.add('dark-mode');
-        updateThemeToggle();
     }
+    updateThemeIcon();
 }
 
 /**
- * Update theme toggle button
+ * Update theme icon
  */
-function updateThemeToggle() {
+function updateThemeIcon() {
     const toggle = document.getElementById('themeToggle');
-    toggle.textContent = app.isDarkMode ? '☀️' : '🌙';
+    toggle.innerHTML = app.isDarkMode
+        ? '<svg class="theme-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+        : '<svg class="theme-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>';
 }
 
 /**
- * Build navigation menu from docStructure
+ * Build navigation from docStructure
  */
 function buildNavigation() {
-    const navMenu = document.querySelector('.nav-menu');
+    const navMenu = document.querySelector('.sidebar-nav');
     navMenu.innerHTML = '';
 
     docStructure.sections.forEach(section => {
+        const navSection = document.createElement('div');
+        navSection.className = 'nav-section';
+
         // Section title
         const sectionTitle = document.createElement('div');
         sectionTitle.className = 'nav-section-title';
         sectionTitle.textContent = section.title;
-        navMenu.appendChild(sectionTitle);
+        navSection.appendChild(sectionTitle);
 
         // Section items
+        const ul = document.createElement('ul');
+        ul.className = 'nav-list';
+
         section.items.forEach(item => {
             const li = document.createElement('li');
             li.className = 'nav-item';
@@ -105,24 +114,28 @@ function buildNavigation() {
             link.textContent = item.title;
             link.href = '#';
             link.dataset.id = item.id;
-            link.dataset.path = item.path;
+            link.dataset.file = item.file;
 
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                loadPage(item.id, item.path, item.title);
+                closeSidebar();
+                loadPage(item.id, item.file, item.title);
             });
 
             li.appendChild(link);
-            navMenu.appendChild(li);
+            ul.appendChild(li);
 
             // Store for search
             app.allDocuments.push({
                 id: item.id,
                 title: item.title,
-                path: item.path,
+                file: item.file,
                 section: section.title
             });
         });
+
+        navSection.appendChild(ul);
+        navMenu.appendChild(navSection);
     });
 }
 
@@ -133,77 +146,107 @@ function setupEventListeners() {
     // Theme toggle
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
+    // Mobile menu
+    document.getElementById('mobileMenuBtn').addEventListener('click', toggleSidebar);
+
     // Search
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', debounce(handleSearch, 300));
+    const searchModal = document.getElementById('searchModal');
 
-    // Search modal close
-    document.querySelector('.close-modal').addEventListener('click', closeSearchModal);
-    document.getElementById('searchModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('searchModal')) {
-            closeSearchModal();
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim()) {
+            openSearchModal();
         }
     });
 
-    // Mobile menu toggle
-    document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+    searchInput.addEventListener('input', debounce(handleSearch, 300));
+
+    // Search modal
+    document.getElementById('searchModalInput').addEventListener('input', debounce(handleSearchModal, 300));
+    document.querySelector('.search-close').addEventListener('click', closeSearchModal);
+    document.querySelector('.search-modal-overlay').addEventListener('click', closeSearchModal);
 
     // Navigation buttons
     document.getElementById('prevBtn').addEventListener('click', goToPrevious);
     document.getElementById('nextBtn').addEventListener('click', goToNext);
 
-    // Close sidebar when clicking on a link (mobile)
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                document.querySelector('.sidebar').classList.remove('active');
-            }
-        });
-    });
+    // Keyboard shortcuts
+    document.addEventListener('keydown', handleKeyboardShortcuts);
 }
 
 /**
- * Toggle dark mode
+ * Toggle theme
  */
 function toggleTheme() {
     app.isDarkMode = !app.isDarkMode;
     document.body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', app.isDarkMode);
-    updateThemeToggle();
+    updateThemeIcon();
 }
 
 /**
  * Toggle sidebar on mobile
  */
 function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('active');
+    document.getElementById('sidebar').classList.toggle('active');
 }
 
 /**
- * Load initial page
+ * Close sidebar
  */
-function loadInitialPage() {
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('active');
+}
+
+/**
+ * Show hero section
+ */
+function showHeroSection() {
+    const heroSection = document.getElementById('heroSection');
+    const docContainer = document.querySelector('.doc-container');
+    heroSection.style.display = 'block';
+    docContainer.style.display = 'none';
+}
+
+/**
+ * Hide hero section
+ */
+function hideHeroSection() {
+    const heroSection = document.getElementById('heroSection');
+    const docContainer = document.querySelector('.doc-container');
+    heroSection.style.display = 'none';
+    docContainer.style.display = 'block';
+}
+
+/**
+ * Load first page
+ */
+function loadFirstPage() {
     const firstDoc = docStructure.sections[0].items[0];
-    loadPage(firstDoc.id, firstDoc.path, firstDoc.title);
+    loadPage(firstDoc.id, firstDoc.file, firstDoc.title);
 }
 
 /**
  * Load a documentation page
  */
-async function loadPage(id, path, title) {
+async function loadPage(id, filePath, title) {
+    hideHeroSection();
     const contentDiv = document.getElementById('docContent');
-    const breadcrumb = document.getElementById('breadcrumb');
+    contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading documentation...</p></div>';
 
     try {
-        contentDiv.innerHTML = '<div class="loading">Loading documentation...</div>';
+        // Construct full path
+        const fullPath = app.baseUrl + filePath;
 
         // Get markdown content
-        let content = app.documentCache.get(path);
+        let content = app.documentCache.get(fullPath);
         if (!content) {
-            const response = await fetch(path);
-            if (!response.ok) throw new Error(`Failed to load ${path}`);
+            const response = await fetch(fullPath);
+            if (!response.ok) {
+                throw new Error(`Failed to load ${filePath} (404)`);
+            }
             content = await response.text();
-            app.documentCache.set(path, content);
+            app.documentCache.set(fullPath, content);
         }
 
         // Convert markdown to HTML
@@ -216,103 +259,133 @@ async function loadPage(id, path, title) {
         });
 
         // Update current page
-        app.currentPage = { id, path, title };
+        app.currentPage = { id, filePath, title };
 
-        // Update breadcrumb
+        // Update UI
         updateBreadcrumb(title);
-
-        // Update active nav link
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        const activeLink = document.querySelector(`[data-id="${id}"]`);
-        if (activeLink) activeLink.classList.add('active');
-
-        // Update navigation buttons
+        updateActiveNavLink(id);
         updateNavigationButtons();
+        updateEditLink(filePath);
+        updateDocMeta();
 
         // Scroll to top
         window.scrollTo(0, 0);
 
     } catch (error) {
         console.error('Error loading page:', error);
-        contentDiv.innerHTML = `<div class="error"><h2>Error Loading Documentation</h2><p>${error.message}</p></div>`;
+        contentDiv.innerHTML = `
+            <div style="padding: 2rem; text-align: center;">
+                <h2>Error Loading Documentation</h2>
+                <p>${error.message}</p>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">
+                    Check that the file exists at: <code>${app.baseUrl}${filePath}</code>
+                </p>
+            </div>
+        `;
     }
 }
 
 /**
- * Update breadcrumb navigation
+ * Update breadcrumb
  */
 function updateBreadcrumb(title) {
     const breadcrumb = document.getElementById('breadcrumb');
     breadcrumb.innerHTML = `
-        <span class="breadcrumb-item">
-            <a href="#" onclick="loadInitialPage(); return false;">Home</a>
-        </span>
+        <span class="breadcrumb-item"><a href="#" onclick="showHeroSection(); return false;">Documentation</a></span>
         <span class="breadcrumb-item">${title}</span>
     `;
 }
 
 /**
- * Update previous/next navigation buttons
+ * Update active nav link
+ */
+function updateActiveNavLink(id) {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    const activeLink = document.querySelector(`[data-id="${id}"]`);
+    if (activeLink) activeLink.classList.add('active');
+}
+
+/**
+ * Update navigation buttons
  */
 function updateNavigationButtons() {
+    const allDocs = getAllDocuments();
+    const currentIndex = allDocs.findIndex(doc => doc.id === app.currentPage.id);
+
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    const allDocs = [];
-
-    docStructure.sections.forEach(section => {
-        section.items.forEach(item => allDocs.push(item));
-    });
-
-    const currentIndex = allDocs.findIndex(doc => doc.id === app.currentPage.id);
 
     if (currentIndex > 0) {
         const prevDoc = allDocs[currentIndex - 1];
-        prevBtn.style.display = 'block';
-        prevBtn.onclick = () => loadPage(prevDoc.id, prevDoc.path, prevDoc.title);
+        prevBtn.style.display = 'flex';
+        prevBtn.onclick = () => loadPage(prevDoc.id, prevDoc.file, prevDoc.title);
     } else {
         prevBtn.style.display = 'none';
     }
 
     if (currentIndex < allDocs.length - 1) {
         const nextDoc = allDocs[currentIndex + 1];
-        nextBtn.style.display = 'block';
-        nextBtn.onclick = () => loadPage(nextDoc.id, nextDoc.path, nextDoc.title);
+        nextBtn.style.display = 'flex';
+        nextBtn.onclick = () => loadPage(nextDoc.id, nextDoc.file, nextDoc.title);
     } else {
         nextBtn.style.display = 'none';
     }
 }
 
 /**
- * Navigate to previous page
+ * Update edit link
  */
-function goToPrevious() {
-    const allDocs = [];
-    docStructure.sections.forEach(section => {
-        section.items.forEach(item => allDocs.push(item));
-    });
+function updateEditLink(filePath) {
+    const editLink = document.getElementById('editLink');
+    const githubUrl = `https://github.com/RaynerMDZ/spring-boot-mcp-companion/edit/main/docs/${filePath}`;
+    editLink.href = githubUrl;
+}
 
-    const currentIndex = allDocs.findIndex(doc => doc.id === app.currentPage.id);
-    if (currentIndex > 0) {
-        const prevDoc = allDocs[currentIndex - 1];
-        loadPage(prevDoc.id, prevDoc.path, prevDoc.title);
+/**
+ * Update doc meta
+ */
+function updateDocMeta() {
+    const meta = document.getElementById('docMeta');
+    const section = docStructure.sections.find(s => s.items.some(item => item.id === app.currentPage.id));
+    if (section) {
+        meta.innerHTML = `<span>${section.title}</span>`;
     }
 }
 
 /**
- * Navigate to next page
+ * Get all documents in order
+ */
+function getAllDocuments() {
+    const all = [];
+    docStructure.sections.forEach(section => {
+        section.items.forEach(item => all.push(item));
+    });
+    return all;
+}
+
+/**
+ * Go to previous page
+ */
+function goToPrevious() {
+    const allDocs = getAllDocuments();
+    const currentIndex = allDocs.findIndex(doc => doc.id === app.currentPage.id);
+    if (currentIndex > 0) {
+        const prevDoc = allDocs[currentIndex - 1];
+        loadPage(prevDoc.id, prevDoc.file, prevDoc.title);
+    }
+}
+
+/**
+ * Go to next page
  */
 function goToNext() {
-    const allDocs = [];
-    docStructure.sections.forEach(section => {
-        section.items.forEach(item => allDocs.push(item));
-    });
-
+    const allDocs = getAllDocuments();
     const currentIndex = allDocs.findIndex(doc => doc.id === app.currentPage.id);
     if (currentIndex < allDocs.length - 1) {
         const nextDoc = allDocs[currentIndex + 1];
-        loadPage(nextDoc.id, nextDoc.path, nextDoc.title);
+        loadPage(nextDoc.id, nextDoc.file, nextDoc.title);
     }
 }
 
@@ -322,51 +395,78 @@ function goToNext() {
 async function buildSearchIndex() {
     for (const doc of app.allDocuments) {
         try {
-            let content = app.documentCache.get(doc.path);
+            const fullPath = app.baseUrl + doc.file;
+            let content = app.documentCache.get(fullPath);
+
             if (!content) {
-                const response = await fetch(doc.path);
+                const response = await fetch(fullPath);
                 if (response.ok) {
                     content = await response.text();
-                    app.documentCache.set(doc.path, content);
+                    app.documentCache.set(fullPath, content);
                 }
             }
 
             if (content) {
-                // Extract headings and content for search
                 const lines = content.split('\n');
-                lines.forEach(line => {
+                lines.forEach((line, idx) => {
                     if (line.match(/^#+\s+/)) {
-                        const heading = line.replace(/^#+\s+/, '');
-                        app.searchIndex.push({
-                            title: heading,
-                            docTitle: doc.title,
-                            docId: doc.id,
-                            docPath: doc.path,
-                            section: doc.section
-                        });
+                        const heading = line.replace(/^#+\s+/, '').trim();
+                        if (heading) {
+                            app.searchIndex.push({
+                                title: heading,
+                                docTitle: doc.title,
+                                docId: doc.id,
+                                docFile: doc.file,
+                                section: doc.section,
+                                preview: lines.slice(idx + 1, idx + 3).join(' ').substring(0, 100)
+                            });
+                        }
                     }
                 });
             }
         } catch (error) {
-            console.warn(`Could not index ${doc.title}:`, error);
+            console.warn(`Could not index ${doc.title}`);
         }
     }
 }
 
 /**
- * Handle search
+ * Handle search in navbar
  */
 function handleSearch(e) {
-    const query = e.target.value.toLowerCase().trim();
+    const query = e.target.value.trim();
 
     if (!query) {
-        closeSearchModal();
+        document.getElementById('searchInput').value = '';
         return;
     }
 
-    const results = [];
-    const searchTerms = query.split(/\s+/);
+    openSearchModal();
+    document.getElementById('searchModalInput').value = query;
+    performSearch(query);
+}
 
+/**
+ * Handle search in modal
+ */
+function handleSearchModal(e) {
+    const query = e.target.value.trim();
+    performSearch(query);
+}
+
+/**
+ * Perform search
+ */
+function performSearch(query) {
+    const results = [];
+    const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t);
+
+    if (!searchTerms.length) {
+        document.getElementById('searchResults').innerHTML = '';
+        return;
+    }
+
+    // Search in documents
     app.allDocuments.forEach(doc => {
         const titleMatch = searchTerms.some(term => doc.title.toLowerCase().includes(term));
         const sectionMatch = searchTerms.some(term => doc.section.toLowerCase().includes(term));
@@ -376,13 +476,14 @@ function handleSearch(e) {
                 title: doc.title,
                 section: doc.section,
                 id: doc.id,
-                path: doc.path,
-                preview: doc.section
+                file: doc.file,
+                preview: doc.section,
+                score: titleMatch ? 2 : 1
             });
         }
     });
 
-    // Also search in index (headings)
+    // Search in index (headings)
     app.searchIndex.forEach(item => {
         const headingMatch = searchTerms.some(term => item.title.toLowerCase().includes(term));
         if (headingMatch && !results.find(r => r.id === item.docId)) {
@@ -390,14 +491,21 @@ function handleSearch(e) {
                 title: `${item.docTitle} - ${item.title}`,
                 section: item.docTitle,
                 id: item.docId,
-                path: item.docPath,
-                preview: item.section
+                file: item.docFile,
+                preview: item.preview || item.section,
+                score: 1
             });
         }
     });
 
-    displaySearchResults(results);
-    openSearchModal();
+    // Sort by score and remove duplicates
+    const unique = new Map();
+    results.sort((a, b) => b.score - a.score);
+    results.forEach(r => {
+        if (!unique.has(r.id)) unique.set(r.id, r);
+    });
+
+    displaySearchResults(Array.from(unique.values()));
 }
 
 /**
@@ -406,15 +514,15 @@ function handleSearch(e) {
 function displaySearchResults(results) {
     const resultsDiv = document.getElementById('searchResults');
 
-    if (results.length === 0) {
-        resultsDiv.innerHTML = '<p style="color: var(--text-secondary);">No results found</p>';
+    if (!results.length) {
+        resultsDiv.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);">No results found</div>';
         return;
     }
 
     resultsDiv.innerHTML = results.map(result => `
-        <div class="search-result-item" onclick="loadPage('${result.id}', '${result.path}', '${result.section}'); closeSearchModal();">
+        <div class="search-result-item" onclick="loadPage('${result.id}', '${result.file}', '${result.section}'); closeSearchModal();">
             <div class="search-result-title">${result.title}</div>
-            <div class="search-result-preview">${result.section}</div>
+            <div class="search-result-preview">${result.preview}</div>
         </div>
     `).join('');
 }
@@ -431,6 +539,34 @@ function openSearchModal() {
  */
 function closeSearchModal() {
     document.getElementById('searchModal').classList.remove('active');
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchModalInput').value = '';
+}
+
+/**
+ * Handle keyboard shortcuts
+ */
+function handleKeyboardShortcuts(e) {
+    // Cmd/Ctrl + K for search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        openSearchModal();
+        document.getElementById('searchModalInput').focus();
+    }
+
+    // Escape to close search
+    if (e.key === 'Escape') {
+        closeSearchModal();
+    }
+
+    // Arrow keys for navigation (when not in input)
+    if (!['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        if (e.key === 'ArrowLeft') {
+            goToPrevious();
+        } else if (e.key === 'ArrowRight') {
+            goToNext();
+        }
+    }
 }
 
 /**
@@ -447,26 +583,3 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
-
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    // Cmd/Ctrl + K for search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('searchInput').focus();
-    }
-
-    // Escape to close search modal
-    if (e.key === 'Escape') {
-        closeSearchModal();
-    }
-
-    // Arrow keys for navigation (when not in input)
-    if (document.activeElement.tagName !== 'INPUT') {
-        if (e.key === 'ArrowLeft') {
-            goToPrevious();
-        } else if (e.key === 'ArrowRight') {
-            goToNext();
-        }
-    }
-});
