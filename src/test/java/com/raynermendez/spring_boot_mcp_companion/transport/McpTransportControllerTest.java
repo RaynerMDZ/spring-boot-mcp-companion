@@ -41,6 +41,27 @@ class McpTransportControllerTest {
   }
 
   @Test
+  void testInitializeReturnsProtocolVersionAndCapabilities() throws Exception {
+    JsonRpcRequest request = new JsonRpcRequest("2.0", 0, "initialize", Map.of());
+    String requestJson = objectMapper.writeValueAsString(request);
+
+    mockMvc
+        .perform(
+            post("/mcp/initialize")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.jsonrpc").value("2.0"))
+        .andExpect(jsonPath("$.id").value(0))
+        .andExpect(jsonPath("$.result.protocolVersion").value("2024-11-05"))
+        .andExpect(jsonPath("$.result.capabilities.tools").exists())
+        .andExpect(jsonPath("$.result.capabilities.resources").exists())
+        .andExpect(jsonPath("$.result.capabilities.prompts").exists())
+        .andExpect(jsonPath("$.result.serverInfo.name").value("Spring Boot MCP Companion"))
+        .andExpect(jsonPath("$.result.serverInfo.version").value("1.0.0"));
+  }
+
+  @Test
   void testToolsListReturnsValidJsonRpcResponse() throws Exception {
     JsonRpcRequest request = new JsonRpcRequest("2.0", 1, "tools/list", Map.of());
     String requestJson = objectMapper.writeValueAsString(request);

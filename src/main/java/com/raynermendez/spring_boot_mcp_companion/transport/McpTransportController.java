@@ -26,7 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST controller for MCP service via JSON-RPC 2.0.
  *
+ * <p>Implements the Model Context Protocol specification (https://modelcontextprotocol.io).
+ *
  * <p>This controller exposes the following endpoints:
+ * - POST {basePath}/initialize: Session initialization and capability negotiation
  * - GET {basePath}/server-info: Returns server name and version
  * - POST {basePath}/tools/list: Returns list of available tools
  * - POST {basePath}/tools/call: Invokes a tool with arguments
@@ -61,6 +64,51 @@ public class McpTransportController {
     this.errorSanitizer = errorSanitizer;
     this.basePath = properties.basePath();
     logger.info("MCP Transport Controller initialized at base path: {}", basePath);
+  }
+
+  /**
+   * Handles POST /initialize requests for session setup.
+   *
+   * <p>This is the first method called by MCP clients to establish a session and negotiate
+   * capabilities. Required by MCP specification.
+   *
+   * @param request the JSON-RPC request
+   * @return JSON-RPC response with protocol version and server capabilities
+   */
+  @PostMapping("${mcp.server.basePath:/mcp}/initialize")
+  public JsonRpcResponse initialize(@RequestBody JsonRpcRequest request) {
+    String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
+    logger.debug("Received initialize request with id: {}", requestId);
+
+    try {
+      Map<String, Object> result = new HashMap<>();
+
+      // Protocol version - MCP specification
+      result.put("protocolVersion", "2024-11-05");
+
+      // Server capabilities
+      Map<String, Object> capabilities = new HashMap<>();
+      capabilities.put("tools", Map.of());
+      capabilities.put("resources", Map.of());
+      capabilities.put("prompts", Map.of());
+      result.put("capabilities", capabilities);
+
+      // Server info
+      Map<String, String> serverInfo = new HashMap<>();
+      serverInfo.put("name", "Spring Boot MCP Companion");
+      serverInfo.put("version", "1.0.0");
+      result.put("serverInfo", serverInfo);
+
+      logger.info("Session initialized with protocol version 2024-11-05");
+      return JsonRpcResponse.success(request.id(), result);
+    } catch (Exception e) {
+      String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "initialize session");
+      JsonRpcError error = new JsonRpcError(
+          JsonRpcError.INTERNAL_ERROR,
+          sanitizedMessage,
+          null);
+      return JsonRpcResponse.error(request.id(), error);
+    }
   }
 
   /**
