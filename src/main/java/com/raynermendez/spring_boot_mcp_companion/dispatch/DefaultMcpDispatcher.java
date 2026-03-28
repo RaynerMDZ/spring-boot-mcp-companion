@@ -87,7 +87,11 @@ public class DefaultMcpDispatcher implements McpDispatcher {
     } catch (Exception e) {
       String errorMsg = "Error invoking tool '" + name + "': " + e.getMessage();
       // Security: Log with filtered arguments to avoid exposing sensitive parameters
-      Map<String, Object> filteredArguments = SensitiveParameterFilter.filterSensitiveArguments(arguments, toolDef);
+      // Note: toolDef may be null if tool lookup failed, so filter only if available
+      Map<String, Object> filteredArguments =
+          toolDef != null
+              ? SensitiveParameterFilter.filterSensitiveArguments(arguments, toolDef)
+              : arguments;
       logger.error("Error invoking tool '{}' with arguments {}", name, filteredArguments, e);
       return new McpToolResult(
           List.of(new McpDispatcher.McpContent("text", errorMsg)), true);
