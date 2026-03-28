@@ -1,28 +1,31 @@
 :root {
-    /* Modern Color Palette */
-    --color-primary: #3b82f6;
-    --color-primary-dark: #1e40af;
-    --color-primary-light: #dbeafe;
+    /* Dracula Theme Colors */
+    --color-primary: #bd93f9;      /* Purple */
+    --color-primary-dark: #9975d9;
+    --color-primary-light: #d9c6ff;
 
-    --color-accent: #8b5cf6;
-    --color-accent-light: #f3e8ff;
+    --color-accent: #ff79c6;       /* Pink */
+    --color-accent-light: #ffb3e6;
 
-    --color-success: #10b981;
-    --color-warning: #f59e0b;
-    --color-error: #ef4444;
+    --color-success: #50fa7b;      /* Green */
+    --color-warning: #ffb86c;      /* Orange */
+    --color-error: #ff5555;        /* Red */
 
     /* Light Mode Colors */
     --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
-    --bg-hover: #eff6ff;
+    --bg-secondary: #f7f8fa;
+    --bg-tertiary: #eff1f5;
+    --bg-hover: #f0e6ff;
 
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --text-tertiary: #9ca3af;
+    --text-primary: #2d2d2d;
+    --text-secondary: #6c6c6c;
+    --text-tertiary: #999999;
 
-    --border-color: #e5e7eb;
-    --border-light: #f3f4f6;
+    --border-color: #e0e0e0;
+    --border-light: #f0f0f0;
+
+    --table-header-bg: #f5f2ff;
+    --table-header-text: #6c5ce7;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
@@ -30,8 +33,8 @@
     --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.12);
 
     /* Gradient */
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-primary: linear-gradient(135deg, #bd93f9 0%, #ff79c6 100%);
+    --gradient-accent: linear-gradient(135deg, #8be9fd 0%, #50fa7b 100%);
 
     /* Typography */
     --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -54,17 +57,21 @@
 }
 
 body.dark-mode {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --bg-hover: #1e293b;
+    /* Dracula Dark Mode */
+    --bg-primary: #282a36;
+    --bg-secondary: #21222c;
+    --bg-tertiary: #44475a;
+    --bg-hover: #3a3d44;
 
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-tertiary: #94a3b8;
+    --text-primary: #f8f8f2;
+    --text-secondary: #bdbfc0;
+    --text-tertiary: #6272a4;
 
-    --border-color: #334155;
-    --border-light: #1e293b;
+    --border-color: #44475a;
+    --border-light: #3a3d44;
+
+    --table-header-bg: #44475a;
+    --table-header-text: #bd93f9;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
@@ -111,9 +118,13 @@ code {
     font-weight: 500;
 }
 
+body.dark-mode code {
+    color: #ff79c6;
+}
+
 pre {
-    background-color: #1a1a2e;
-    border: 1px solid var(--border-color);
+    background-color: #282a36;
+    border: 1px solid #44475a;
     border-radius: 0.75rem;
     padding: var(--spacing-6);
     overflow-x: auto;
@@ -124,9 +135,13 @@ pre {
 
 pre code {
     background-color: transparent;
-    color: #e0e0e0;
+    color: #f8f8f2;
     padding: 0;
     border-radius: 0;
+}
+
+body.dark-mode pre {
+    background-color: #21222c;
 }
 
 /* App Layout */
@@ -376,7 +391,7 @@ body.dark-mode .navbar {
     font-size: 3rem;
     font-weight: 800;
     margin-bottom: var(--spacing-4);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -409,7 +424,7 @@ body.dark-mode .navbar {
 }
 
 .cta-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-primary);
     color: white;
     box-shadow: var(--shadow-md);
 }
@@ -437,8 +452,8 @@ body.dark-mode .navbar {
 }
 
 .feature-badge {
-    background-color: var(--color-primary-light);
-    color: var(--color-primary-dark);
+    background-color: #f0e6ff;
+    color: #6c5ce7;
     padding: var(--spacing-2) var(--spacing-4);
     border-radius: 9999px;
     font-size: 0.875rem;
@@ -446,8 +461,8 @@ body.dark-mode .navbar {
 }
 
 body.dark-mode .feature-badge {
-    background-color: rgba(59, 130, 246, 0.2);
-    color: var(--color-primary);
+    background-color: rgba(189, 147, 249, 0.2);
+    color: #bd93f9;
 }
 
 /* Document Container */
@@ -456,6 +471,8 @@ body.dark-mode .feature-badge {
     margin: 0 auto;
     padding: var(--spacing-12) var(--spacing-8);
     width: 100%;
+    margin-left: var(--spacing-8);
+    margin-right: var(--spacing-8);
 }
 
 .doc-header {
@@ -582,12 +599,12 @@ body.dark-mode .feature-badge {
 }
 
 .doc-content th {
-    background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-accent-light) 100%);
+    background-color: var(--table-header-bg);
     font-weight: 700;
     padding: var(--spacing-4);
     text-align: left;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border-color);
+    color: var(--table-header-text);
+    border-bottom: 2px solid var(--color-primary);
 }
 
 .doc-content td {
@@ -610,6 +627,11 @@ body.dark-mode .feature-badge {
     font-style: italic;
 }
 
+body.dark-mode .doc-content blockquote {
+    background-color: rgba(189, 147, 249, 0.1);
+    color: #bdbfc0;
+}
+
 .doc-content hr {
     border: none;
     height: 1px;
@@ -619,8 +641,12 @@ body.dark-mode .feature-badge {
 
 /* Code Highlighting */
 .hljs {
-    background-color: #1a1a2e !important;
-    color: #e0e0e0 !important;
+    background-color: #282a36 !important;
+    color: #f8f8f2 !important;
+}
+
+body.dark-mode .hljs {
+    background-color: #21222c !important;
 }
 
 /* Document Footer */
@@ -644,7 +670,7 @@ body.dark-mode .feature-badge {
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-3) var(--spacing-6);
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    background: var(--gradient-primary);
     color: white;
     border: none;
     border-radius: 0.5rem;
@@ -845,6 +871,8 @@ body.dark-mode .feature-badge {
 
     .doc-container {
         padding: var(--spacing-6) var(--spacing-4);
+        margin-left: var(--spacing-4);
+        margin-right: var(--spacing-4);
     }
 
     .doc-content h1 {
