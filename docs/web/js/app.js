@@ -240,13 +240,11 @@ async function loadPage(id, filePath, title) {
     hideHeroSection();
     const contentDiv = document.getElementById('docContent');
 
-    // Fade out animation before loading
-    contentDiv.style.opacity = '0';
-    contentDiv.style.transform = 'translateY(10px)';
-
-    setTimeout(() => {
-        contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading documentation...</p></div>';
-    }, 150);
+    // Immediately show loading state with no animation
+    contentDiv.style.transition = 'none';
+    contentDiv.style.opacity = '1';
+    contentDiv.style.transform = 'translateY(0)';
+    contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading documentation...</p></div>';
 
     try {
         // Construct full path
@@ -265,12 +263,20 @@ async function loadPage(id, filePath, title) {
 
         // Convert markdown to HTML
         const html = marked.parse(content);
+
+        // Set up animation before content renders
+        contentDiv.style.transition = 'none';
+        contentDiv.style.opacity = '0';
+        contentDiv.style.transform = 'translateY(10px)';
+
         contentDiv.innerHTML = html;
 
-        // Reset animation styles and trigger new animation
-        contentDiv.style.opacity = '1';
-        contentDiv.style.transform = 'translateY(0)';
-        contentDiv.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        // Trigger animation on next frame
+        requestAnimationFrame(() => {
+            contentDiv.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            contentDiv.style.opacity = '1';
+            contentDiv.style.transform = 'translateY(0)';
+        });
 
         // Highlight code blocks
         document.querySelectorAll('pre code').forEach(block => {
