@@ -58,7 +58,7 @@ class StreamingTransportIntegrationTest {
         .andExpect(content().contentType("application/json"))
         .andExpect(jsonPath("$.jsonrpc").value("2.0"))
         .andExpect(jsonPath("$.id").value(0))
-        .andExpect(jsonPath("$.result.protocolVersion").value("2024-11-05"))
+        .andExpect(jsonPath("$.result.protocolVersion").value("2025-11-25"))
         .andExpect(jsonPath("$.result.serverInfo.name").value("Spring Boot MCP Companion"));
   }
 

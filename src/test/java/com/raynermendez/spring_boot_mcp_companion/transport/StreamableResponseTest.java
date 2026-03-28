@@ -26,7 +26,7 @@ class StreamableResponseTest {
         "jsonrpc", "2.0",
         "id", 1,
         "result", Map.of(
-            "protocolVersion", "2024-11-05",
+            "protocolVersion", "2025-11-25",
             "capabilities", Map.of(),
             "serverInfo", Map.of("name", "Test", "version", "1.0.0")
         )
@@ -43,7 +43,7 @@ class StreamableResponseTest {
     String result = outputStream.toString(StandardCharsets.UTF_8);
 
     assertTrue(result.contains("\"jsonrpc\":\"2.0\""));
-    assertTrue(result.contains("\"protocolVersion\":\"2024-11-05\""));
+    assertTrue(result.contains("\"protocolVersion\":\"2025-11-25\""));
     assertTrue(result.contains("\"serverInfo\""));
   }
 

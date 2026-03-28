@@ -106,44 +106,44 @@ implementation 'com.raynermendez:spring-boot-mcp-companion-core:1.0.0'
 
 ### Configuration
 
-The MCP server runs on a **separate embedded server** from your main Spring Boot application:
+MCP endpoints are served on the **same server** as your main Spring Boot application:
 
 ```yaml
 server:
-  port: 8080                    # Your main API server (default: 8080)
+  port: 8080                    # Main application server (default: 8080)
 
 mcp:
   server:
-    enabled: true               # Enable/disable MCP (default: true)
-    port: 8090                  # MCP server port - SEPARATE from server.port (default: 8090)
-    name: "My Service"          # Server name
+    enabled: true               # Enable/disable MCP endpoints (default: true)
+    name: "My Service"          # Server name advertised to MCP clients
     version: "1.0.0"            # Server version
-    base-path: /mcp             # Endpoint prefix (default: /mcp)
+    base-path: /mcp             # Base path for MCP endpoints (default: /mcp)
 ```
 
 This architecture allows:
-- Main API on port 8080, MCP on port 8090
-- Independent scaling and configuration
-- Separate security policies per server
-- Isolated monitoring and logging
+- REST API and MCP endpoints on the same port (8080)
+- Simpler cloud deployment (one load balancer rule)
+- Shared resource pool (thread pool, connection pool)
+- Path-based routing: `/api/**` for REST, `/mcp/**` for MCP
+- Lower infrastructure cost
 
 ### MCP Endpoints
 
-All endpoints use JSON-RPC 2.0 format on the MCP server port (**port 8090** by default, configurable):
+All endpoints use JSON-RPC 2.0 format on the main application server (**port 8080** by default, configurable):
 
-**Note:** MCP endpoints are on a separate embedded server from your main application.
+**Note:** MCP endpoints are served alongside your REST API under the configured base path.
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| GET | `http://localhost:8090/mcp/server-info` | Server metadata |
-| POST | `http://localhost:8090/mcp/tools/list` | List available tools |
-| POST | `http://localhost:8090/mcp/tools/call` | Call a tool with arguments |
-| POST | `http://localhost:8090/mcp/resources/list` | List available resources |
-| POST | `http://localhost:8090/mcp/resources/read` | Read a resource |
-| POST | `http://localhost:8090/mcp/prompts/list` | List available prompts |
-| POST | `http://localhost:8090/mcp/prompts/get` | Get a prompt with arguments |
+| GET | `http://localhost:8080/mcp/server-info` | Server metadata |
+| POST | `http://localhost:8080/mcp/tools/list` | List available tools |
+| POST | `http://localhost:8080/mcp/tools/call` | Call a tool with arguments |
+| POST | `http://localhost:8080/mcp/resources/list` | List available resources |
+| POST | `http://localhost:8080/mcp/resources/read` | Read a resource |
+| POST | `http://localhost:8080/mcp/prompts/list` | List available prompts |
+| POST | `http://localhost:8080/mcp/prompts/get` | Get a prompt with arguments |
 
-Your main application API remains on `http://localhost:8080` (or whatever `server.port` is configured)
+Both your main application API (`/api/**`) and MCP endpoints (`/mcp/**`) run on the same port (configured via `server.port`)
 
 ## 📋 Common Tasks
 

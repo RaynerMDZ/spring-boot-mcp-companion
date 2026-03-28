@@ -8,8 +8,10 @@ import com.raynermendez.spring_boot_mcp_companion.mapper.McpMappingEngine;
 import com.raynermendez.spring_boot_mcp_companion.registry.DefaultMcpDefinitionRegistry;
 import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry;
 import com.raynermendez.spring_boot_mcp_companion.scanner.McpAnnotationScanner;
+import com.raynermendez.spring_boot_mcp_companion.security.ErrorMessageSanitizer;
 import com.raynermendez.spring_boot_mcp_companion.spi.DefaultMcpOutputSerializer;
 import com.raynermendez.spring_boot_mcp_companion.spi.McpOutputSerializer;
+import com.raynermendez.spring_boot_mcp_companion.transport.McpTransportController;
 import com.raynermendez.spring_boot_mcp_companion.validation.DefaultMcpInputValidator;
 import com.raynermendez.spring_boot_mcp_companion.validation.McpInputValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -88,27 +90,32 @@ public class McpAutoConfiguration {
     return new McpAnnotationScanner(registry, mappingEngine);
   }
 
+  @Bean
+  public ErrorMessageSanitizer errorMessageSanitizer() {
+    return new ErrorMessageSanitizer();
+  }
+
   /**
-   * Creates a separate embedded Tomcat server for MCP endpoints on a distinct port.
+   * Creates the MCP transport controller that handles JSON-RPC 2.0 requests.
    *
-   * <p>This allows the MCP server to run independently from the main Spring Boot application.
-   * For example:
-   * - Main app API runs on port 8080 (server.port)
-   * - MCP server runs on port 8090 (mcp.server.port)
-   *
-   * <p>The MCP controller is registered ONLY on the embedded server, not on the main
-   * application server, ensuring complete isolation between the two.
+   * <p>The controller is registered on the main Spring Boot application server,
+   * not on a separate embedded server. MCP endpoints are served alongside REST API
+   * endpoints under the configured base path (default: /mcp).
    *
    * @param dispatcher the MCP dispatcher
    * @param registry the MCP definition registry
-   * @param properties MCP server properties (port configuration)
-   * @return embedded MCP server instance
+   * @param properties MCP server properties (base path configuration)
+   * @param errorSanitizer error message sanitizer
+   * @param objectMapper Jackson ObjectMapper
+   * @return MCP transport controller
    */
   @Bean
-  public McpEmbeddedServer mcpEmbeddedServer(
+  public McpTransportController mcpTransportController(
       McpDispatcher dispatcher,
       McpDefinitionRegistry registry,
-      McpServerProperties properties) {
-    return new McpEmbeddedServer(dispatcher, registry, properties);
+      McpServerProperties properties,
+      ErrorMessageSanitizer errorSanitizer,
+      ObjectMapper objectMapper) {
+    return new McpTransportController(dispatcher, registry, properties, errorSanitizer, objectMapper);
   }
 }

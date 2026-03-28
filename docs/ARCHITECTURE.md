@@ -25,85 +25,90 @@ This document explains the internal architecture and design decisions of Spring 
 ### High-Level System Design
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│           Your Spring Boot Application                     │
-│            (Main API on Port 8080)                         │
-│                                                            │
-│  Your Controllers, Services, Repositories                 │
-│  ↓ (Annotated with @McpTool/@McpResource/@McpPrompt)     │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-              ↓
-┌────────────────────────────────────────────────────────────┐
-│  Spring Boot MCP Companion Framework                       │
-│                                                            │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │  1. DISCOVERY PHASE (Startup)                    │    │
-│  │  - Scan for @McpTool/@McpResource/@McpPrompt    │    │
-│  │  - Extract metadata from annotations & methods   │    │
-│  │  - Generate JSON schemas for all parameters      │    │
-│  │  - Register handlers in dispatcher               │    │
-│  └──────────────────────────────────────────────────┘    │
-│                    ↓                                       │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │  2. REQUEST PROCESSING PHASE (Runtime)           │    │
-│  │  - Receive JSON-RPC 2.0 request                  │    │
-│  │  - Security checks & rate limiting               │    │
-│  │  - Parameter validation                          │    │
-│  │  - Type conversion (JSON → Java)                 │    │
-│  │  - Method invocation                             │    │
-│  │  - Response serialization (Java → JSON)          │    │
-│  │  - Error handling & formatting                   │    │
-│  └──────────────────────────────────────────────────┘    │
-│                    ↓                                       │
-│  ┌──────────────────────────────────────────────────┐    │
-│  │  3. OUTPUT PHASE                                  │    │
-│  │  - JSON-RPC 2.0 formatted response              │    │
-│  │  - Metrics & monitoring                          │    │
-│  │  - Logging & audit trail                         │    │
-│  └──────────────────────────────────────────────────┘    │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-              ↓
-┌────────────────────────────────────────────────────────────┐
-│  Embedded MCP Server (Port 8090)                           │
-│                                                            │
-│  HTTP Endpoints:                                           │
-│  - GET  /mcp/server-info                                  │
-│  - POST /mcp/tools/list                                   │
-│  - POST /mcp/tools/call                                   │
-│  - POST /mcp/resources/list                               │
-│  - POST /mcp/resources/read                               │
-│  - POST /mcp/prompts/list                                 │
-│  - POST /mcp/prompts/get                                  │
-│  - POST /mcp/initialize                                   │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│         Unified Spring Boot Application                      │
+│              (Single Server, Port 8080)                      │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  Your REST API Controllers, Services, Repositories     │ │
+│  │  ↓ (Decorated with @McpTool/@McpResource/@McpPrompt) │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  1. DISCOVERY PHASE (Startup)                          │ │
+│  │  - Scan for @McpTool/@McpResource/@McpPrompt         │ │
+│  │  - Extract metadata from annotations & methods        │ │
+│  │  - Generate JSON schemas for all parameters           │ │
+│  │  - Register handlers in dispatcher                    │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                         ↓                                    │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  2. REQUEST PROCESSING PHASE (Runtime)                 │ │
+│  │  - Receive REST or JSON-RPC 2.0 request               │ │
+│  │  - Route: /api/** → REST handlers, /mcp/** → MCP     │ │
+│  │  - Security checks & rate limiting                    │ │
+│  │  - Parameter validation                               │ │
+│  │  - Type conversion (JSON → Java)                      │ │
+│  │  - Method invocation                                  │ │
+│  │  - Response serialization (Java → JSON)               │ │
+│  │  - Error handling & formatting                        │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                         ↓                                    │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  3. OUTPUT PHASE                                        │ │
+│  │  - JSON-RPC 2.0 response (for /mcp/*)                 │ │
+│  │  - REST response (for /api/**)                        │ │
+│  │  - Metrics & monitoring                               │ │
+│  │  - Logging & audit trail                              │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────────┐
+│  HTTP Endpoints (All on Port 8080)                           │
+│                                                              │
+│  REST API:                                                   │
+│  - GET /api/v1/users, POST /api/v1/users, etc.            │
+│                                                              │
+│  MCP Endpoints:                                              │
+│  - GET  /mcp/server-info → Server metadata                 │
+│  - POST /mcp/tools/list → List available tools            │
+│  - POST /mcp/tools/call → Invoke a tool                   │
+│  - POST /mcp/resources/list → List resources              │
+│  - POST /mcp/resources/read → Read a resource             │
+│  - POST /mcp/prompts/list → List prompts                  │
+│  - POST /mcp/prompts/get → Get a prompt                   │
+│  - POST /mcp/initialize → Initialize session              │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Dual-Port Architecture
+### Unified Single-Port Architecture
 
-A key design decision is running the MCP server on a **separate embedded server**:
+MCP endpoints are served on the **same server** as your main Spring Boot application:
 
 **Benefits:**
-- ✅ Independent scaling (API on 8080, MCP on 8090)
-- ✅ Separate security policies (different rate limits, auth)
-- ✅ Isolated monitoring (different dashboards)
-- ✅ Non-invasive integration (doesn't modify main API)
+- ✅ Simpler cloud deployment (single port, one load balancer rule)
+- ✅ Shared resource pool (more efficient thread utilization)
+- ✅ Lower infrastructure cost (one service vs two)
+- ✅ Path-based routing (REST and MCP coexist)
+- ✅ Non-invasive integration (doesn't modify business logic)
 - ✅ Optional (disable with `mcp.server.enabled: false`)
 
 **Configuration:**
 ```yaml
 server:
-  port: 8080              # Main REST API
-  servlet:
-    context-path: /api
+  port: 8080              # Main application server (REST API + MCP)
 
 mcp:
   server:
-    port: 8090            # Separate MCP server
-    base-path: /mcp
+    enabled: true         # Enable MCP endpoints
+    base-path: /mcp       # MCP endpoints served at /mcp/**
 ```
+
+**Endpoint Routing:**
+- REST API: `http://localhost:8080/api/v1/**`
+- MCP Endpoints: `http://localhost:8080/mcp/**`
 
 ---
 

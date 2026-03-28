@@ -53,7 +53,7 @@ class McpTransportControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.jsonrpc").value("2.0"))
         .andExpect(jsonPath("$.id").value(0))
-        .andExpect(jsonPath("$.result.protocolVersion").value("2024-11-05"))
+        .andExpect(jsonPath("$.result.protocolVersion").value("2025-11-25"))
         .andExpect(jsonPath("$.result.capabilities.tools").exists())
         .andExpect(jsonPath("$.result.capabilities.resources").exists())
         .andExpect(jsonPath("$.result.capabilities.prompts").exists())

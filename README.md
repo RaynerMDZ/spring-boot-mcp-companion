@@ -195,18 +195,14 @@ Configure via `application.yml` in your resources directory:
 ```yaml
 # Main Spring Boot Application
 server:
-  port: 8080                          # Your REST API port
-  servlet:
-    context-path: /api/v1
+  port: 8080                          # Main application server
 
-# MCP Server (Separate Embedded Server)
 mcp:
   server:
-    enabled: true                     # Enable/disable MCP
-    port: 8090                        # MCP server port (independent from server.port)
+    enabled: true                     # Enable/disable MCP endpoints
     name: "My Service"                # Server name advertised to MCP clients
     version: "1.0.0"                  # Server version
-    base-path: /mcp                   # Endpoint prefix
+    base-path: /mcp                   # Endpoint prefix (serves on same port as server.port)
 ```
 
 ### Validation Dependencies (Optional but Recommended)
@@ -300,48 +296,40 @@ String email
 ### High-Level Design
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│           Your Spring Boot Application                      │
-│  (Port 8080: REST API, Business Logic, Database Access)    │
-│                                                             │
-│  ┌───────────────────────────────────────────────────────┐ │
-│  │  Spring Beans, Controllers, Services, Repositories    │ │
-│  │  (Decorated with @McpTool/@McpResource/@McpPrompt)    │ │
-│  └───────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-         │
-         │ Auto-discovered at startup
-         ↓
-┌─────────────────────────────────────────────────────────────┐
-│      Spring Boot MCP Companion Framework                    │
-│                                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │   Metadata  │  │   Type      │  │  Validation │        │
-│  │  Extraction │  │  Mapping    │  │  Engine     │        │
-│  └─────────────┘  └─────────────┘  └─────────────┘        │
-│                                                             │
-│  ┌──────────────────────────────────────────────────┐     │
-│  │  JSON-RPC 2.0 Handler + Schema Generation       │     │
-│  └──────────────────────────────────────────────────┘     │
-│                                                             │
-│  ┌──────────────────────────────────────────────────┐     │
-│  │  Security, Rate Limiting, Observable Monitoring │     │
-│  └──────────────────────────────────────────────────┘     │
-└─────────────────────────────────────────────────────────────┘
-         │
-         │ JSON-RPC 2.0
-         ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Embedded MCP Server (Port 8090)                            │
-│                                                             │
-│  GET  /mcp/server-info     → Server metadata               │
-│  POST /mcp/tools/list      → List available tools          │
-│  POST /mcp/tools/call      → Call a tool                   │
-│  POST /mcp/resources/list  → List available resources      │
-│  POST /mcp/resources/read  → Read a resource               │
-│  POST /mcp/prompts/list    → List available prompts        │
-│  POST /mcp/prompts/get     → Get a prompt                  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│              Unified Spring Boot Application                 │
+│                   (Single Server)                            │
+│                   (Port 8080)                                │
+│                                                              │
+│  ┌──────────────────┐          ┌─────────────────────────┐ │
+│  │   REST API       │          │    MCP Endpoints        │ │
+│  │  /api/v1/...     │          │     /mcp/...            │ │
+│  │                  │          │                         │ │
+│  │ - User routes    │          │ - tools/list            │ │
+│  │ - Auth endpoints │          │ - tools/call            │ │
+│  │ - CRUD ops       │          │ - resources/list        │ │
+│  └──────────────────┘          │ - resources/read        │ │
+│                                 │ - prompts/list          │ │
+│  ┌──────────────────────────────┼──────────────────────┐ │
+│  │  Spring Beans, Controllers, Services, Repositories  │ │
+│  │  (Decorated with @McpTool/@McpResource/@McpPrompt) │ │
+│  └──────────────────────────────────────────────────────┘ │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Spring Boot MCP Companion Framework                │    │
+│  │                                                     │    │
+│  │  • Metadata Extraction                             │    │
+│  │  • Type Mapping & JSON Schema Generation           │    │
+│  │  • Input Validation                                │    │
+│  │  • JSON-RPC 2.0 Handler                            │    │
+│  │  • Security, Rate Limiting, Observability          │    │
+│  └────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │  Shared Resources: Thread Pool, Connection Pool    │    │
+│  │  Database Access, Metrics, Logging                 │    │
+│  └────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### Project Structure

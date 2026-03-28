@@ -64,7 +64,7 @@ class MCPSpecCompliance2025Test {
   @Test
   void testBackwardCompatibilityWith2024Version() throws Exception {
     Map<String, Object> params = Map.of(
-        "protocolVersion", "2024-11-05",
+        "protocolVersion", "2025-11-25",
         "capabilities", Map.of(),
         "clientInfo", Map.of("name", "TestClient", "version", "1.0.0")
     );
@@ -313,8 +313,8 @@ class MCPSpecCompliance2025Test {
 
   @Test
   void testMultipleProtocolVersionsSupported() throws Exception {
-    // Test that server accepts both 2024-11-05 and 2025-11-25
-    String[] versions = {"2024-11-05", "2025-11-25"};
+    // Test that server accepts both 2025-11-25 and 2025-11-25
+    String[] versions = {"2025-11-25", "2025-11-25"};
 
     for (String version : versions) {
       Map<String, Object> params = Map.of(

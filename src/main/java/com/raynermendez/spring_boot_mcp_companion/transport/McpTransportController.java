@@ -33,7 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>Implements the Model Context Protocol specification (https://modelcontextprotocol.io).
  *
- * <p>This controller exposes the following endpoints:
+ * <p>This controller exposes the following endpoints on the main application server
+ * (not a separate embedded server):
  * - POST {basePath}/initialize: Session initialization and capability negotiation
  * - GET {basePath}/server-info: Returns server name and version
  * - POST {basePath}/tools/list: Returns list of available tools
@@ -47,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
  * mcp.server.enabled is true (defaults to true if not specified).
  */
 @RestController
+@org.springframework.web.bind.annotation.RequestMapping("${mcp.server.basePath:/mcp}")
 public class McpTransportController {
 
   private static final Logger logger = LoggerFactory.getLogger(McpTransportController.class);
@@ -85,7 +87,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/initialize")
+  @PostMapping("/initialize")
   public void initialize(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -231,7 +233,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/tools/list")
+  @PostMapping("/tools/list")
   public void listTools(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -283,7 +285,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/tools/call")
+  @PostMapping("/tools/call")
   public void callTool(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -382,7 +384,7 @@ public class McpTransportController {
    *
    * @return server info response with name and version
    */
-  @GetMapping("${mcp.server.basePath:/mcp}/server-info")
+  @GetMapping("/server-info")
   public Map<String, Object> getServerInfo() {
     logger.debug("Received server-info request");
     return Map.of(
@@ -399,7 +401,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/resources/list")
+  @PostMapping("/resources/list")
   public void listResources(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -451,7 +453,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/resources/read")
+  @PostMapping("/resources/read")
   public void readResource(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -537,7 +539,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/prompts/list")
+  @PostMapping("/prompts/list")
   public void listPrompts(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -589,7 +591,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/prompts/get")
+  @PostMapping("/prompts/get")
   public void getPrompt(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -740,7 +742,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/sampling/createMessage")
+  @PostMapping("/sampling/createMessage")
   public void sampling(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -783,7 +785,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/elicitation/create")
+  @PostMapping("/elicitation/create")
   public void elicitation(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -825,7 +827,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/logging/create")
+  @PostMapping("/logging/create")
   public void logging(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -874,7 +876,7 @@ public class McpTransportController {
    * @param response the HTTP response to stream to
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/roots/list")
+  @PostMapping("/roots/list")
   public void rootsList(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
@@ -927,7 +929,7 @@ public class McpTransportController {
    * @param response the HTTP response
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/notifications/tools/list_changed")
+  @PostMapping("/notifications/tools/list_changed")
   public void toolsListChanged(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     logger.info("Received tools/list_changed notification");
@@ -942,7 +944,7 @@ public class McpTransportController {
    * @param response the HTTP response
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/notifications/resources/list_changed")
+  @PostMapping("/notifications/resources/list_changed")
   public void resourcesListChanged(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     logger.info("Received resources/list_changed notification");
@@ -956,7 +958,7 @@ public class McpTransportController {
    * @param response the HTTP response
    * @throws IOException if streaming fails
    */
-  @PostMapping("${mcp.server.basePath:/mcp}/notifications/prompts/list_changed")
+  @PostMapping("/notifications/prompts/list_changed")
   public void promptsListChanged(@RequestBody JsonRpcRequest request, HttpServletResponse response)
       throws IOException {
     logger.info("Received prompts/list_changed notification");

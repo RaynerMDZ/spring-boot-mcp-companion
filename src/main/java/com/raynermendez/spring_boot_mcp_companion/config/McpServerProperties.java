@@ -9,13 +9,20 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding;
  * <p>This class is bound from Spring configuration using the "mcp.server" prefix. All properties
  * support constructor binding for immutability.
  *
+ * <p>MCP endpoints are served on the same port as the main Spring Boot application
+ * (configured via server.port). Only the base path for MCP endpoints is configurable.
+ *
  * <p>Example configuration:
  * <pre>{@code
- * mcp.server.enabled=true
- * mcp.server.name=my-mcp-server
- * mcp.server.version=1.0.0
- * mcp.server.port=8090
- * mcp.server.basePath=/api/mcp
+ * server:
+ *   port: 8080
+ *
+ * mcp:
+ *   server:
+ *     enabled: true
+ *     name: my-mcp-server
+ *     version: 1.0.0
+ *     base-path: /mcp
  * }</pre>
  */
 @ConfigurationProperties(prefix = "mcp.server")
@@ -36,13 +43,9 @@ public record McpServerProperties(
      */
     String version,
     /**
-     * Port for MCP server endpoints.
-     * Defaults to 8090.
-     */
-    int port,
-    /**
-     * Base path for all MCP endpoints (e.g., /api/mcp).
+     * Base path for all MCP endpoints (e.g., /mcp).
      * Defaults to "/mcp".
+     * MCP endpoints run on the main server port (server.port).
      */
     String basePath) {
 
@@ -52,7 +55,6 @@ public record McpServerProperties(
    * @param enabled whether the MCP server is enabled
    * @param name the server name
    * @param version the server version
-   * @param port the port number
    * @param basePath the base path for endpoints
    */
   @ConstructorBinding
@@ -60,12 +62,10 @@ public record McpServerProperties(
       boolean enabled,
       String name,
       String version,
-      int port,
       String basePath) {
     this.enabled = enabled;
     this.name = name != null ? name : "spring-boot-mcp-companion";
     this.version = version != null ? version : "1.0.0";
-    this.port = port > 0 ? port : 8090;
     this.basePath = basePath != null ? basePath : "/mcp";
   }
 }
