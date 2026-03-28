@@ -1,40 +1,40 @@
 # Documentation Website - Deployment Guide
 
-This documentation website is a lightweight, static HTML/CSS/JavaScript application that serves the project documentation with a modern UI.
+This documentation website is a self-contained, lightweight static HTML/CSS/JavaScript application with all documentation bundled together.
 
 ## Quick Start Locally
 
 ### Using Python (Recommended)
 
-**IMPORTANT: Serve from the `docs/` directory, not `docs/web/`:**
-
 ```bash
-cd docs
+cd docs/web
 python3 -m http.server 8000
 ```
 
-Then visit `http://localhost:8000/web/` in your browser.
+Then visit `http://localhost:8000` in your browser.
 
 ### Using Node.js
 
 ```bash
-cd docs
+cd docs/web
 npx http-server
-# Visit http://localhost:8080/web/
+# Visit http://localhost:8080
 ```
 
 ### Using Ruby
 
 ```bash
-cd docs
+cd docs/web
 ruby -run -ehttpd . -p8000
-# Visit http://localhost:8000/web/
+# Visit http://localhost:8000
 ```
 
-### Why serve from `docs/`?
-The website needs to access markdown files from the docs directory (e.g., `../getting-started/QUICK_START.md`).
-When serving from `docs/web/`, relative paths cannot escape the directory for security reasons.
-Serving from `docs/` allows the website to load all documentation files correctly.
+### Notes
+
+The documentation is completely self-contained in the `docs/web/` directory:
+- All markdown files are in `docs/web/content/`
+- No external dependencies needed
+- Can be deployed to any static hosting service
 
 ## Production Deployment Options
 

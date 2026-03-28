@@ -1,45 +1,45 @@
-// Documentation structure with correct paths
+// Documentation structure with paths relative to web root
 const docStructure = {
     sections: [
         {
             title: 'Getting Started',
             items: [
-                { title: 'Quick Start', path: 'README', id: 'quick-start', file: 'README.md' },
-                { title: 'Installation Guide', path: 'getting-started/QUICK_START', id: 'installation', file: 'getting-started/QUICK_START.md' },
-                { title: 'Project Overview', path: 'getting-started/README', id: 'overview', file: 'getting-started/README.md' },
+                { title: 'Quick Start', id: 'quick-start', file: 'content/README.md' },
+                { title: 'Installation Guide', id: 'installation', file: 'content/getting-started/QUICK_START.md' },
+                { title: 'Project Overview', id: 'overview', file: 'content/getting-started/README.md' },
             ]
         },
         {
             title: 'Core API',
             items: [
-                { title: 'API Reference', path: 'core/API_REFERENCE', id: 'api-ref', file: 'core/API_REFERENCE.md' },
-                { title: 'Features', path: 'core/FEATURES', id: 'features', file: 'core/FEATURES.md' },
-                { title: 'Examples', path: 'core/EXAMPLES', id: 'examples', file: 'core/EXAMPLES.md' },
+                { title: 'API Reference', id: 'api-ref', file: 'content/core/API_REFERENCE.md' },
+                { title: 'Features', id: 'features', file: 'content/core/FEATURES.md' },
+                { title: 'Examples', id: 'examples', file: 'content/core/EXAMPLES.md' },
             ]
         },
         {
             title: 'Advanced',
             items: [
-                { title: 'Architecture', path: 'ARCHITECTURE', id: 'architecture', file: 'ARCHITECTURE.md' },
-                { title: 'Custom Objects', path: 'CUSTOM_OBJECTS', id: 'custom-objects', file: 'CUSTOM_OBJECTS.md' },
-                { title: 'MCP Specification', path: 'MCP_SPECIFICATION', id: 'mcp-spec', file: 'MCP_SPECIFICATION.md' },
+                { title: 'Architecture', id: 'architecture', file: 'content/ARCHITECTURE.md' },
+                { title: 'Custom Objects', id: 'custom-objects', file: 'content/CUSTOM_OBJECTS.md' },
+                { title: 'MCP Specification', id: 'mcp-spec', file: 'content/MCP_SPECIFICATION.md' },
             ]
         },
         {
             title: 'Production',
             items: [
-                { title: 'Best Practices', path: 'production/BEST_PRACTICES', id: 'best-practices', file: 'production/BEST_PRACTICES.md' },
-                { title: 'Security Guide', path: 'production/SECURITY', id: 'security', file: 'production/SECURITY.md' },
-                { title: 'Advanced Configuration', path: 'production/ADVANCED', id: 'advanced', file: 'production/ADVANCED.md' },
-                { title: 'Troubleshooting', path: 'production/TROUBLESHOOTING', id: 'troubleshooting', file: 'production/TROUBLESHOOTING.md' },
+                { title: 'Best Practices', id: 'best-practices', file: 'content/production/BEST_PRACTICES.md' },
+                { title: 'Security Guide', id: 'security', file: 'content/production/SECURITY.md' },
+                { title: 'Advanced Configuration', id: 'advanced', file: 'content/production/ADVANCED.md' },
+                { title: 'Troubleshooting', id: 'troubleshooting', file: 'content/production/TROUBLESHOOTING.md' },
             ]
         },
         {
             title: 'Contributing',
             items: [
-                { title: 'Contributing Guidelines', path: 'contributing/CONTRIBUTING', id: 'contributing', file: 'contributing/CONTRIBUTING.md' },
-                { title: 'Changelog', path: 'contributing/CHANGELOG', id: 'changelog', file: 'contributing/CHANGELOG.md' },
-                { title: 'License Analysis', path: 'contributing/LICENSE_ANALYSIS', id: 'license', file: 'contributing/LICENSE_ANALYSIS.md' },
+                { title: 'Contributing Guidelines', id: 'contributing', file: 'content/contributing/CONTRIBUTING.md' },
+                { title: 'Changelog', id: 'changelog', file: 'content/contributing/CHANGELOG.md' },
+                { title: 'License Analysis', id: 'license', file: 'content/contributing/LICENSE_ANALYSIS.md' },
             ]
         }
     ]
@@ -52,8 +52,8 @@ const app = {
     allDocuments: [],
     searchIndex: [],
     isDarkMode: localStorage.getItem('darkMode') === 'true',
-    // The website is always in docs/web/, so markdown files are at ../
-    baseUrl: '../'
+    // Markdown files are bundled in content/ folder within the web directory
+    baseUrl: ''
 };
 
 // Initialize
@@ -79,10 +79,16 @@ function initializeTheme() {
  * Update theme icon
  */
 function updateThemeIcon() {
-    const toggle = document.getElementById('themeToggle');
-    toggle.innerHTML = app.isDarkMode
-        ? '<svg class="theme-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
-        : '<svg class="theme-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>';
+    const sunIcon = document.querySelector('.sun-icon');
+    const moonIcon = document.querySelector('.moon-icon');
+
+    if (app.isDarkMode) {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    }
 }
 
 /**
@@ -233,7 +239,14 @@ function loadFirstPage() {
 async function loadPage(id, filePath, title) {
     hideHeroSection();
     const contentDiv = document.getElementById('docContent');
-    contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading documentation...</p></div>';
+
+    // Fade out animation before loading
+    contentDiv.style.opacity = '0';
+    contentDiv.style.transform = 'translateY(10px)';
+
+    setTimeout(() => {
+        contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading documentation...</p></div>';
+    }, 150);
 
     try {
         // Construct full path
@@ -253,6 +266,11 @@ async function loadPage(id, filePath, title) {
         // Convert markdown to HTML
         const html = marked.parse(content);
         contentDiv.innerHTML = html;
+
+        // Reset animation styles and trigger new animation
+        contentDiv.style.opacity = '1';
+        contentDiv.style.transform = 'translateY(0)';
+        contentDiv.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
 
         // Highlight code blocks
         document.querySelectorAll('pre code').forEach(block => {
@@ -274,19 +292,20 @@ async function loadPage(id, filePath, title) {
 
     } catch (error) {
         console.error('Error loading page:', error);
+        contentDiv.style.opacity = '1';
+        contentDiv.style.transform = 'translateY(0)';
         contentDiv.innerHTML = `
             <div style="padding: 2rem; text-align: center;">
                 <h2>⚠️ Error Loading Documentation</h2>
                 <p style="color: var(--color-error);">Failed to load: <code>${filePath}</code></p>
                 <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 2rem; line-height: 1.8;">
                     <strong>📝 Setup Instructions:</strong><br><br>
-                    The documentation server must be run from the <code>docs/</code> directory:<br><br>
+                    Run the server from the <code>docs/web/</code> directory:<br><br>
                     <code style="background: var(--bg-secondary); padding: 0.5rem 1rem; border-radius: 0.375rem; display: inline-block; margin: 1rem 0;">
-                        cd docs<br>
+                        cd docs/web<br>
                         python3 -m http.server 8000
                     </code><br><br>
-                    Then visit: <a href="http://localhost:8000/web/" style="color: var(--color-primary);">http://localhost:8000/web/</a><br>
-                    (Note the <code>/web/</code> path)
+                    Then visit: <a href="http://localhost:8000" style="color: var(--color-primary);">http://localhost:8000</a>
                 </p>
             </div>
         `;
@@ -347,7 +366,7 @@ function updateNavigationButtons() {
  */
 function updateEditLink(filePath) {
     const editLink = document.getElementById('editLink');
-    const githubUrl = `https://github.com/RaynerMDZ/spring-boot-mcp-companion/edit/main/docs/${filePath}`;
+    const githubUrl = `https://github.com/RaynerMDZ/spring-boot-mcp-companion/edit/main/docs/web/${filePath}`;
     editLink.href = githubUrl;
 }
 

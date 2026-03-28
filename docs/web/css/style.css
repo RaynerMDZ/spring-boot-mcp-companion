@@ -151,6 +151,18 @@ body.dark-mode pre {
     min-height: 100vh;
 }
 
+/* App Container - Centers content with margins */
+.app::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-primary);
+    z-index: -1;
+}
+
 /* Navbar */
 .navbar {
     background: var(--bg-primary);
@@ -303,6 +315,10 @@ body.dark-mode .navbar {
 .main-layout {
     display: flex;
     flex: 1;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    gap: 0;
 }
 
 /* Sidebar */
@@ -362,9 +378,10 @@ body.dark-mode .navbar {
 
 .nav-link.active {
     color: var(--color-primary);
-    background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+    background: linear-gradient(90deg, rgba(189, 147, 249, 0.15) 0%, transparent 100%);
     border-left-color: var(--color-primary);
     font-weight: 600;
+    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Content Area */
@@ -380,6 +397,7 @@ body.dark-mode .navbar {
     padding: var(--spacing-16) var(--spacing-8);
     text-align: center;
     border-bottom: 1px solid var(--border-color);
+    animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hero-content {
@@ -517,6 +535,7 @@ body.dark-mode .feature-badge {
 /* Document Content */
 .doc-content {
     padding-bottom: var(--spacing-12);
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loading {
@@ -537,6 +556,33 @@ body.dark-mode .feature-badge {
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* Typography in Content */
