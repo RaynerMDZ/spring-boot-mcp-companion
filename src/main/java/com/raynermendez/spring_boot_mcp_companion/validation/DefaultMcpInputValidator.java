@@ -89,6 +89,11 @@ public class DefaultMcpInputValidator implements McpInputValidator {
       violations.addAll(validateArrayConstraints(fieldName, arr, schema));
     }
 
+    // Validate object/Map constraints
+    if (value instanceof Map<?, ?> obj) {
+      violations.addAll(validateObjectConstraints(fieldName, obj, schema));
+    }
+
     // Validate enum values
     if (schema.containsKey("enum")) {
       @SuppressWarnings("unchecked")
@@ -262,6 +267,73 @@ public class DefaultMcpInputValidator implements McpInputValidator {
       return n.intValue();
     }
     return 0;
+  }
+
+  /**
+   * Validates object/Map-specific constraints.
+   *
+   * @param fieldName the field name
+   * @param value the map/object value
+   * @param schema the JSON Schema
+   * @return violations list
+   */
+  private List<McpViolation> validateObjectConstraints(
+      String fieldName, Map<?, ?> value, Map<String, Object> schema) {
+    List<McpViolation> violations = new ArrayList<>();
+
+    // Validate required properties
+    if (schema.containsKey("required")) {
+      @SuppressWarnings("unchecked")
+      List<String> required = (List<String>) schema.get("required");
+      for (String reqProp : required) {
+        if (!value.containsKey(reqProp)) {
+          violations.add(
+              new McpViolation(
+                  fieldName, "Required property missing: " + reqProp));
+        }
+      }
+    }
+
+    // Validate properties schema (recursive)
+    if (schema.containsKey("properties")) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> properties = (Map<String, Object>) schema.get("properties");
+      for (Map.Entry<?, ?> entry : value.entrySet()) {
+        String propName = (String) entry.getKey();
+        Object propValue = entry.getValue();
+
+        if (properties.containsKey(propName)) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> propSchema = (Map<String, Object>) properties.get(propName);
+          violations.addAll(
+              validateAgainstSchema(fieldName + "." + propName, propValue, propSchema));
+        }
+      }
+    }
+
+    // Validate minProperties
+    if (schema.containsKey("minProperties")) {
+      int minProps = toInt(schema.get("minProperties"));
+      if (value.size() < minProps) {
+        violations.add(
+            new McpViolation(
+                fieldName,
+                "Object has " + value.size() + " properties but minimum is " + minProps));
+      }
+    }
+
+    // Validate maxProperties
+    if (schema.containsKey("maxProperties")) {
+      int maxProps = toInt(schema.get("maxProperties"));
+      if (value.size() > maxProps) {
+        violations.add(
+            new McpViolation(
+                fieldName,
+                "Object has " + value.size() + " properties but maximum is " + maxProps));
+      }
+    }
+
+    return violations;
   }
 
   /**

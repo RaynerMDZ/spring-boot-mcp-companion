@@ -138,7 +138,8 @@ public class DefaultMcpDispatcher implements McpDispatcher {
    * Validates that a value is compatible with the target type before conversion.
    *
    * <p>Security: Performs basic type validation to prevent type coercion attacks that could
-   * bypass business logic or exploit unexpected type conversions.
+   * bypass business logic or exploit unexpected type conversions. Accepts primitives, collections,
+   * and complex objects for flexible parameter handling.
    *
    * @param value the value to validate
    * @param targetType the target type
@@ -155,12 +156,12 @@ public class DefaultMcpDispatcher implements McpDispatcher {
       return true;
     }
 
-    // Boolean type - only accept Boolean or String values
+    // Boolean type - accept Boolean or String values
     if (targetType == Boolean.class || targetType == boolean.class) {
       return value instanceof Boolean || value instanceof String;
     }
 
-    // Numeric types - only accept Number or String values
+    // Numeric types - accept Number or String values
     if (targetType == Integer.class || targetType == int.class ||
         targetType == Long.class || targetType == long.class ||
         targetType == Double.class || targetType == double.class ||
@@ -168,23 +169,31 @@ public class DefaultMcpDispatcher implements McpDispatcher {
       return value instanceof Number || value instanceof String;
     }
 
-    // List/Array type - only accept List or String values
+    // List/Array type - accept List, Map (will be converted), or String values
     if (targetType == java.util.List.class || targetType.isArray()) {
-      return value instanceof java.util.List || value instanceof String;
+      return value instanceof java.util.List || value instanceof Map || value instanceof String;
     }
 
-    // Map type - only accept Map or String values
-    if (targetType == Map.class) {
+    // Map type - accept Map, List (array-like), or String values
+    if (targetType == Map.class || java.util.Map.class.isAssignableFrom(targetType)) {
+      return value instanceof Map || value instanceof java.util.List || value instanceof String;
+    }
+
+    // Complex objects - accept Map (JSON object) or String values
+    // This allows JSON objects to be deserialized into custom objects
+    if (!targetType.isPrimitive() && !targetType.isArray()) {
       return value instanceof Map || value instanceof String;
     }
 
-    // For other complex types, allow Jackson to attempt conversion
-    // but reject if the value is a primitive array or certain suspicious types
-    if (value.getClass().isArray() && !value.getClass().getComponentType().isPrimitive()) {
-      return false; // Reject non-primitive arrays that don't match list/array targets
+    // For primitive arrays, only accept List or primitive array
+    if (value.getClass().isArray()) {
+      return value.getClass().getComponentType().isPrimitive() ||
+             targetType == java.util.List.class ||
+             targetType.isArray();
     }
 
-    return true; // Allow other types for Jackson to handle
+    // Default: allow Jackson to attempt conversion
+    return true;
   }
 
   @Override
