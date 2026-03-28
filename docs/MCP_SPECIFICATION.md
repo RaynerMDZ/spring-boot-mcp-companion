@@ -1,6 +1,6 @@
 # MCP Specification Compliance
 
-**Spring Boot MCP Companion v1.0.0** - Implements Model Context Protocol (MCP) 2024-11-05
+**Spring Boot MCP Companion v1.0.0** - Implements Model Context Protocol (MCP) 2025-11-25 with backward compatibility for 2024-11-05
 
 ---
 
@@ -555,6 +555,202 @@ const client = new MCPClient();
 const init = await client.initialize();
 console.log(`Connected to: ${init.result.serverInfo.name}`);
 ```
+
+---
+
+## Version Negotiation (2025-11-25 Feature)
+
+**Feature:** ✅ Implemented
+
+MCP clients and servers negotiate protocol version during initialization to ensure compatibility.
+
+### Version Support
+
+- **Current**: 2025-11-25 (Latest)
+- **Backward Compatible**: 2024-11-05
+
+### Negotiation Process
+
+1. Client sends `initialize` request with supported `protocolVersion`
+2. Server responds with its protocol version
+3. If versions match, communication proceeds
+4. If incompatible, error returned with list of supported versions
+
+### HTTP Protocol Version Header
+
+All HTTP responses include the `MCP-Protocol-Version` header:
+```
+MCP-Protocol-Version: 2025-11-25
+```
+
+---
+
+## Enhanced Capabilities (2025-11-25 Feature)
+
+**Feature:** ✅ Implemented
+
+Server declares detailed capabilities with sub-features for dynamic protocol negotiations.
+
+### Server Capabilities
+
+- **tools**: Supports `listChanged` notifications
+- **resources**: Supports `listChanged` and `subscribe`
+- **prompts**: Supports `listChanged` notifications
+- **logging**: Can send log messages to client
+- **completions**: Supports argument autocompletion
+- **tasks**: Experimental support for task management
+
+### Example Initialization
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-11-25",
+    "capabilities": {
+      "sampling": {},
+      "elicitation": { "form": {}, "url": {} }
+    },
+    "clientInfo": {
+      "name": "ExampleClient",
+      "version": "1.0.0"
+    }
+  }
+}
+```
+
+Response:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolVersion": "2025-11-25",
+    "capabilities": {
+      "tools": { "listChanged": true },
+      "resources": { "listChanged": true, "subscribe": true },
+      "prompts": { "listChanged": true },
+      "logging": {},
+      "completions": {},
+      "tasks": { "list": {}, "cancel": {} }
+    },
+    "serverInfo": {
+      "name": "Spring Boot MCP Companion",
+      "title": "Spring Boot MCP Server",
+      "version": "1.0.0",
+      "description": "A Spring Boot implementation of MCP 2025-11-25",
+      "websiteUrl": "...",
+      "icons": [{ "mimeType": "image/svg+xml", "sizes": ["any"] }],
+      "instructions": "..."
+    }
+  }
+}
+```
+
+---
+
+## Client Primitives (2025-11-25 Feature)
+
+**Feature:** ✅ Implemented
+
+Servers can call back to clients to request services and send notifications.
+
+### Sampling (LLM Completions)
+
+**Endpoint:** `POST /sampling/createMessage`
+
+Servers request language model completions from the client's AI application.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 100,
+  "method": "sampling/createMessage",
+  "params": {
+    "messages": [...],
+    "model": "claude-3-5-sonnet"
+  }
+}
+```
+
+### Elicitation (User Input)
+
+**Endpoint:** `POST /elicitation/create`
+
+Servers request user input or confirmation.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 101,
+  "method": "elicitation/create",
+  "params": {
+    "type": "text",
+    "prompt": "Please provide your input:"
+  }
+}
+```
+
+### Logging (Server Logs)
+
+**Endpoint:** `POST /logging/create`
+
+Servers send structured log messages.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 102,
+  "method": "logging/create",
+  "params": {
+    "level": "info",
+    "message": "Server operation completed"
+  }
+}
+```
+
+### Roots (Filesystem Access)
+
+**Endpoint:** `POST /roots/list`
+
+Servers discover available filesystem roots.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 103,
+  "method": "roots/list",
+  "params": {}
+}
+```
+
+---
+
+## Server-to-Client Notifications (2025-11-25 Feature)
+
+**Feature:** ✅ Implemented
+
+Servers send real-time notifications about capability changes.
+
+### Supported Notifications
+
+- **tools/list_changed**: Tool list has changed
+- **resources/list_changed**: Resource list has changed
+- **prompts/list_changed**: Prompt list has changed
+
+### Example
+
+Server sends notification (no response expected):
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/tools/list_changed"
+}
+```
+
+Client typically responds by calling `tools/list` to refresh.
 
 ---
 
