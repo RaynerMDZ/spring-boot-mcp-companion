@@ -1,13 +1,13 @@
 # Documentation Website - Deployment Guide
 
-This documentation website is a self-contained, lightweight static HTML/CSS/JavaScript application with all documentation bundled together.
+This documentation website is a self-contained, lightweight static HTML/CSS/JavaScript application with all documentation bundled together in `/docs/`.
 
 ## Quick Start Locally
 
 ### Using Python (Recommended)
 
 ```bash
-cd docs/web
+cd docs
 python3 -m http.server 8000
 ```
 
@@ -16,7 +16,7 @@ Then visit `http://localhost:8000` in your browser.
 ### Using Node.js
 
 ```bash
-cd docs/web
+cd docs
 npx http-server
 # Visit http://localhost:8080
 ```
@@ -24,15 +24,16 @@ npx http-server
 ### Using Ruby
 
 ```bash
-cd docs/web
+cd docs
 ruby -run -ehttpd . -p8000
 # Visit http://localhost:8000
 ```
 
 ### Notes
 
-The documentation is completely self-contained in the `docs/web/` directory:
-- All markdown files are in `docs/web/content/`
+The documentation is completely self-contained in the `docs/` directory:
+- All markdown files are in `docs/content/`
+- HTML, CSS, and JS files at root level
 - No external dependencies needed
 - Can be deployed to any static hosting service
 
@@ -40,7 +41,7 @@ The documentation is completely self-contained in the `docs/web/` directory:
 
 ### Option 1: Static Hosting (GitHub Pages, Netlify, Vercel)
 
-1. Copy the entire `docs/web/` directory to your static hosting service
+1. Copy the entire `docs/` directory to your static hosting service
 2. No build step required - it's pure HTML/CSS/JS
 3. Recommended hosts:
    - **GitHub Pages**: Free, integrates with your repo
@@ -56,12 +57,12 @@ Add the following to your Spring Boot `application.yml`:
 spring:
   web:
     resources:
-      static-locations: classpath:/static/,file:docs/web/
+      static-locations: classpath:/static/,file:docs/
 ```
 
-Then copy `docs/web/` contents to `src/main/resources/static/docs/`.
+Then copy `docs/` contents to `src/main/resources/static/`.
 
-Access at: `http://localhost:8080/docs/`
+Access at: `http://localhost:8080/`
 
 ### Option 3: Docker
 
@@ -69,7 +70,7 @@ Create a `Dockerfile` in the project root:
 
 ```dockerfile
 FROM nginx:alpine
-COPY docs/web/ /usr/share/nginx/html/
+COPY docs/ /usr/share/nginx/html/
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
@@ -119,7 +120,7 @@ Then configure Spring Boot to serve the docs (Option 2).
 
 ### Adding Documentation
 
-Edit `docs/web/js/app.js` and add entries to the `docStructure`:
+Edit `docs/js/app.js` and add entries to the `docStructure`:
 
 ```javascript
 const docStructure = {
@@ -129,8 +130,8 @@ const docStructure = {
             items: [
                 {
                     title: 'Your Document',
-                    path: '../path/to/document.md',
-                    id: 'unique-id'
+                    id: 'unique-id',
+                    file: 'content/path/to/document.md'
                 }
             ]
         }
@@ -140,12 +141,12 @@ const docStructure = {
 
 ### Customizing Colors
 
-Edit `docs/web/css/style.css` and modify the CSS variables in `:root`:
+Edit `docs/css/style.css` and modify the CSS variables in `:root`:
 
 ```css
 :root {
-    --accent-color: #2563eb;
-    --accent-hover: #1d4ed8;
+    --color-primary: #bd93f9;
+    --color-accent: #ff79c6;
     --bg-primary: #ffffff;
     /* ... etc */
 }
@@ -153,7 +154,7 @@ Edit `docs/web/css/style.css` and modify the CSS variables in `:root`:
 
 ### Customizing Header
 
-Edit the header in `docs/web/index.html`:
+Edit the header in `docs/index.html`:
 
 ```html
 <div class="logo">
@@ -203,24 +204,23 @@ Edit the header in `docs/web/index.html`:
 
 To make the site your own:
 
-1. **Colors**: Modify CSS variables in `css/style.css`
-2. **Navigation**: Update `docStructure` in `js/app.js`
-3. **Layout**: Edit HTML in `index.html`
-4. **Styling**: All CSS is in `css/style.css` (no preprocessors needed)
+1. **Colors**: Modify CSS variables in `docs/css/style.css`
+2. **Navigation**: Update `docStructure` in `docs/js/app.js`
+3. **Layout**: Edit HTML in `docs/index.html`
+4. **Styling**: All CSS is in `docs/css/style.css` (no preprocessors needed)
 
 ## Publishing to GitHub Pages
 
-1. Copy `docs/web/` to your `docs/` directory in main branch
-2. Go to Settings > Pages > Build and deployment
-3. Select "Deploy from a branch"
-4. Select "main" and "/docs" folder
-5. Site will be live at `https://yourusername.github.io/repo-name/`
+1. Go to Settings > Pages > Build and deployment
+2. Select "Deploy from a branch"
+3. Select "main" and "/docs" folder
+4. Site will be live at `https://yourusername.github.io/repo-name/`
 
 ## Publishing to Netlify
 
 1. Fork/clone the repository
 2. Connect your repo to Netlify
-3. Set build directory to `docs/web/`
+3. Set build directory to `docs/`
 4. Deploy
 
 Site will be live in seconds!
