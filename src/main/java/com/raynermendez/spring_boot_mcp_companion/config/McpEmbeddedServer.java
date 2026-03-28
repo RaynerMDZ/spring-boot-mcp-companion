@@ -7,7 +7,6 @@ import com.raynermendez.spring_boot_mcp_companion.transport.McpTransportControll
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 /**
  * Embedded MCP server that runs on a separate port from the main Spring Boot application.
@@ -61,18 +60,13 @@ public class McpEmbeddedServer {
     mcpContext.registerBean(McpTransportController.class,
         () -> new McpTransportController(dispatcher, registry, properties,
             new ErrorMessageSanitizer()));
-    mcpContext.register(WebMvcConfig.class);
+    // Note: WebMvc configuration is not registered in standalone context.
+    // The MCP transport controller is registered directly as a bean.
     mcpContext.refresh();
 
     logger.info("MCP Embedded Server context initialized on port {} with base path {}",
         properties.port(), properties.basePath());
   }
-
-  /**
-   * Minimal WebMvc configuration for MCP server context.
-   */
-  @EnableWebMvc
-  static class WebMvcConfig {}
 
   /**
    * Graceful shutdown hook.

@@ -41,11 +41,13 @@ class SensitiveParameterFilterTest {
     );
 
     Method dummyMethod = String.class.getMethod("valueOf", Object.class);
-    MethodHandlerRef handler = new MethodHandlerRef(dummyMethod, new Object());
+    Object targetBean = new Object();
+    MethodHandlerRef handler = new MethodHandlerRef(targetBean, dummyMethod, "testBean");
 
     toolDefWithSensitiveParams = new McpToolDefinition(
         "test_tool",
         "Test tool",
+        new String[]{},
         params,
         Map.of("type", "object"),
         handler
@@ -60,6 +62,7 @@ class SensitiveParameterFilterTest {
     toolDefNoSensitiveParams = new McpToolDefinition(
         "safe_tool",
         "Safe tool",
+        new String[]{},
         noSensitiveParams,
         Map.of("type", "object"),
         handler
