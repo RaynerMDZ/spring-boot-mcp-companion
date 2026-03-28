@@ -1,5 +1,6 @@
 package com.raynermendez.spring_boot_mcp_companion.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raynermendez.spring_boot_mcp_companion.dispatch.McpDispatcher;
 import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry;
 import com.raynermendez.spring_boot_mcp_companion.security.ErrorMessageSanitizer;
@@ -57,9 +58,10 @@ public class McpEmbeddedServer {
     mcpContext.registerBean(McpDefinitionRegistry.class, () -> registry);
     mcpContext.registerBean(McpServerProperties.class, () -> properties);
     mcpContext.registerBean(ErrorMessageSanitizer.class, ErrorMessageSanitizer::new);
+    mcpContext.registerBean(ObjectMapper.class, () -> new ObjectMapper());
     mcpContext.registerBean(McpTransportController.class,
         () -> new McpTransportController(dispatcher, registry, properties,
-            new ErrorMessageSanitizer()));
+            new ErrorMessageSanitizer(), new ObjectMapper()));
     // Note: WebMvc configuration is not registered in standalone context.
     // The MCP transport controller is registered directly as a bean.
     mcpContext.refresh();

@@ -1,5 +1,6 @@
 package com.raynermendez.spring_boot_mcp_companion.transport;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raynermendez.spring_boot_mcp_companion.config.McpServerProperties;
 import com.raynermendez.spring_boot_mcp_companion.dispatch.McpDispatcher;
 import com.raynermendez.spring_boot_mcp_companion.dispatch.McpDispatcher.McpContent;
@@ -11,6 +12,8 @@ import com.raynermendez.spring_boot_mcp_companion.model.McpResourceDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpToolDefinition;
 import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry;
 import com.raynermendez.spring_boot_mcp_companion.security.ErrorMessageSanitizer;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,7 @@ public class McpTransportController {
   private final McpDefinitionRegistry registry;
   private final McpServerProperties properties;
   private final ErrorMessageSanitizer errorSanitizer;
+  private final ObjectMapper objectMapper;
   private final String basePath;
 
   @Autowired
@@ -57,11 +61,13 @@ public class McpTransportController {
       McpDispatcher dispatcher,
       McpDefinitionRegistry registry,
       McpServerProperties properties,
-      ErrorMessageSanitizer errorSanitizer) {
+      ErrorMessageSanitizer errorSanitizer,
+      ObjectMapper objectMapper) {
     this.dispatcher = dispatcher;
     this.registry = registry;
     this.properties = properties;
     this.errorSanitizer = errorSanitizer;
+    this.objectMapper = objectMapper;
     this.basePath = properties.basePath();
     logger.info("MCP Transport Controller initialized at base path: {}", basePath);
   }
@@ -70,13 +76,16 @@ public class McpTransportController {
    * Handles POST /initialize requests for session setup.
    *
    * <p>This is the first method called by MCP clients to establish a session and negotiate
-   * capabilities. Required by MCP specification.
+   * capabilities. Required by MCP specification. Response is streamed directly to the HTTP output
+   * without buffering in memory.
    *
    * @param request the JSON-RPC request
-   * @return JSON-RPC response with protocol version and server capabilities
+   * @param response the HTTP response to stream to
+   * @throws IOException if streaming fails
    */
   @PostMapping("${mcp.server.basePath:/mcp}/initialize")
-  public JsonRpcResponse initialize(@RequestBody JsonRpcRequest request) {
+  public void initialize(@RequestBody JsonRpcRequest request, HttpServletResponse response)
+      throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
     logger.debug("Received initialize request with id: {}", requestId);
 
@@ -100,25 +109,49 @@ public class McpTransportController {
       result.put("serverInfo", serverInfo);
 
       logger.info("Session initialized with protocol version 2024-11-05");
-      return JsonRpcResponse.success(request.id(), result);
+      JsonRpcResponse jsonRpcResponse = JsonRpcResponse.success(request.id(), result);
+
+      // Stream the response
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(jsonRpcResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     } catch (Exception e) {
       String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "initialize session");
       JsonRpcError error = new JsonRpcError(
           JsonRpcError.INTERNAL_ERROR,
           sanitizedMessage,
           null);
-      return JsonRpcResponse.error(request.id(), error);
+      JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     }
   }
 
   /**
    * Handles GET /tools/list requests to list available tools.
    *
+   * <p>Response is streamed directly to the HTTP output without buffering in memory.
+   *
    * @param request the JSON-RPC request
-   * @return JSON-RPC response with array of tool descriptors
+   * @param response the HTTP response to stream to
+   * @throws IOException if streaming fails
    */
   @PostMapping("${mcp.server.basePath:/mcp}/tools/list")
-  public JsonRpcResponse listTools(@RequestBody JsonRpcRequest request) {
+  public void listTools(@RequestBody JsonRpcRequest request, HttpServletResponse response)
+      throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
     logger.debug("Received tools/list request with id: {}", requestId);
 
@@ -128,7 +161,17 @@ public class McpTransportController {
           .map(this::toolToDescriptor)
           .toList();
 
-      return JsonRpcResponse.success(request.id(), Map.of("tools", toolList));
+      JsonRpcResponse jsonRpcResponse =
+          JsonRpcResponse.success(request.id(), Map.of("tools", toolList));
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(jsonRpcResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     } catch (Exception e) {
       // Security: Return generic error message to client
       String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "list tools");
@@ -136,18 +179,31 @@ public class McpTransportController {
           JsonRpcError.INTERNAL_ERROR,
           sanitizedMessage,
           null);
-      return JsonRpcResponse.error(request.id(), error);
+      JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     }
   }
 
   /**
    * Handles POST /tools/call requests to invoke a tool.
    *
+   * <p>Response is streamed directly to the HTTP output without buffering in memory.
+   *
    * @param request the JSON-RPC request with method="tools/call"
-   * @return JSON-RPC response with tool result
+   * @param response the HTTP response to stream to
+   * @throws IOException if streaming fails
    */
   @PostMapping("${mcp.server.basePath:/mcp}/tools/call")
-  public JsonRpcResponse callTool(@RequestBody JsonRpcRequest request) {
+  public void callTool(@RequestBody JsonRpcRequest request, HttpServletResponse response)
+      throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
     logger.debug("Received tools/call request: method={}, id={}", request.method(), requestId);
 
@@ -158,7 +214,17 @@ public class McpTransportController {
             JsonRpcError.INVALID_PARAMS,
             "Missing required parameter: name",
             null);
-        return JsonRpcResponse.error(request.id(), error);
+        JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+        StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+        response.setContentType(streamable.getContentType());
+        if (streamable.getContentLength() > 0) {
+          response.setContentLength((int) streamable.getContentLength());
+        }
+        response.setStatus(200);
+        streamable.writeTo(response.getOutputStream());
+        return;
       }
 
       String toolName = (String) request.params().get("name");
@@ -170,20 +236,31 @@ public class McpTransportController {
       McpToolResult result = dispatcher.dispatchTool(toolName, arguments);
 
       // Return appropriate response based on result
+      JsonRpcResponse jsonRpcResponse;
       if (result.isError()) {
         JsonRpcError error = new JsonRpcError(
             JsonRpcError.METHOD_NOT_FOUND,
             extractErrorMessage(result),
             null);
-        return JsonRpcResponse.error(request.id(), error);
+        jsonRpcResponse = JsonRpcResponse.error(request.id(), error);
       } else {
         Map<String, Object> resultMap = Map.of(
             "content", result.content().stream()
                 .map(c -> Map.of("type", c.type(), "text", c.text()))
                 .toList()
         );
-        return JsonRpcResponse.success(request.id(), resultMap);
+        jsonRpcResponse = JsonRpcResponse.success(request.id(), resultMap);
       }
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(jsonRpcResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     } catch (Exception e) {
       // Security: Return generic error message to client
       String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "call tool");
@@ -191,7 +268,16 @@ public class McpTransportController {
           JsonRpcError.INTERNAL_ERROR,
           sanitizedMessage,
           null);
-      return JsonRpcResponse.error(request.id(), error);
+      JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     }
   }
 
@@ -225,11 +311,15 @@ public class McpTransportController {
   /**
    * Handles POST /resources/list requests to list available resources.
    *
+   * <p>Response is streamed directly to the HTTP output without buffering in memory.
+   *
    * @param request the JSON-RPC request
-   * @return JSON-RPC response with array of resource descriptors
+   * @param response the HTTP response to stream to
+   * @throws IOException if streaming fails
    */
   @PostMapping("${mcp.server.basePath:/mcp}/resources/list")
-  public JsonRpcResponse listResources(@RequestBody JsonRpcRequest request) {
+  public void listResources(@RequestBody JsonRpcRequest request, HttpServletResponse response)
+      throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
     logger.debug("Received resources/list request with id: {}", requestId);
 
@@ -239,7 +329,17 @@ public class McpTransportController {
           .map(this::resourceToDescriptor)
           .toList();
 
-      return JsonRpcResponse.success(request.id(), Map.of("resources", resourceList));
+      JsonRpcResponse jsonRpcResponse =
+          JsonRpcResponse.success(request.id(), Map.of("resources", resourceList));
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(jsonRpcResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     } catch (Exception e) {
       // Security: Return generic error message to client
       String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "list resources");
@@ -247,18 +347,31 @@ public class McpTransportController {
           JsonRpcError.INTERNAL_ERROR,
           sanitizedMessage,
           null);
-      return JsonRpcResponse.error(request.id(), error);
+      JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     }
   }
 
   /**
    * Handles POST /resources/read requests to read a resource.
    *
+   * <p>Response is streamed directly to the HTTP output without buffering in memory.
+   *
    * @param request the JSON-RPC request with method="resources/read"
-   * @return JSON-RPC response with resource content
+   * @param response the HTTP response to stream to
+   * @throws IOException if streaming fails
    */
   @PostMapping("${mcp.server.basePath:/mcp}/resources/read")
-  public JsonRpcResponse readResource(@RequestBody JsonRpcRequest request) {
+  public void readResource(@RequestBody JsonRpcRequest request, HttpServletResponse response)
+      throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
     logger.debug("Received resources/read request: method={}, id={}", request.method(), requestId);
 
@@ -268,7 +381,17 @@ public class McpTransportController {
             JsonRpcError.INVALID_PARAMS,
             "Missing required parameter: uri",
             null);
-        return JsonRpcResponse.error(request.id(), error);
+        JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+        StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+        response.setContentType(streamable.getContentType());
+        if (streamable.getContentLength() > 0) {
+          response.setContentLength((int) streamable.getContentLength());
+        }
+        response.setStatus(200);
+        streamable.writeTo(response.getOutputStream());
+        return;
       }
 
       String resourceUri = (String) request.params().get("uri");
@@ -278,20 +401,31 @@ public class McpTransportController {
 
       McpResourceResult result = dispatcher.dispatchResource(resourceUri, params);
 
+      JsonRpcResponse jsonRpcResponse;
       if (result.isError()) {
         JsonRpcError error = new JsonRpcError(
             JsonRpcError.METHOD_NOT_FOUND,
             result.content(),
             null);
-        return JsonRpcResponse.error(request.id(), error);
+        jsonRpcResponse = JsonRpcResponse.error(request.id(), error);
       } else {
         Map<String, Object> resultMap = Map.of(
             "uri", result.uri(),
             "content", result.content(),
             "mimeType", result.mimeType()
         );
-        return JsonRpcResponse.success(request.id(), resultMap);
+        jsonRpcResponse = JsonRpcResponse.success(request.id(), resultMap);
       }
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(jsonRpcResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     } catch (Exception e) {
       // Security: Return generic error message to client
       String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "read resource");
@@ -299,18 +433,31 @@ public class McpTransportController {
           JsonRpcError.INTERNAL_ERROR,
           sanitizedMessage,
           null);
-      return JsonRpcResponse.error(request.id(), error);
+      JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     }
   }
 
   /**
    * Handles POST /prompts/list requests to list available prompts.
    *
+   * <p>Response is streamed directly to the HTTP output without buffering in memory.
+   *
    * @param request the JSON-RPC request
-   * @return JSON-RPC response with array of prompt descriptors
+   * @param response the HTTP response to stream to
+   * @throws IOException if streaming fails
    */
   @PostMapping("${mcp.server.basePath:/mcp}/prompts/list")
-  public JsonRpcResponse listPrompts(@RequestBody JsonRpcRequest request) {
+  public void listPrompts(@RequestBody JsonRpcRequest request, HttpServletResponse response)
+      throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
     logger.debug("Received prompts/list request with id: {}", requestId);
 
@@ -320,7 +467,17 @@ public class McpTransportController {
           .map(this::promptToDescriptor)
           .toList();
 
-      return JsonRpcResponse.success(request.id(), Map.of("prompts", promptList));
+      JsonRpcResponse jsonRpcResponse =
+          JsonRpcResponse.success(request.id(), Map.of("prompts", promptList));
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(jsonRpcResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     } catch (Exception e) {
       // Security: Return generic error message to client
       String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "list prompts");
@@ -328,18 +485,31 @@ public class McpTransportController {
           JsonRpcError.INTERNAL_ERROR,
           sanitizedMessage,
           null);
-      return JsonRpcResponse.error(request.id(), error);
+      JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     }
   }
 
   /**
    * Handles POST /prompts/get requests to invoke a prompt template.
    *
+   * <p>Response is streamed directly to the HTTP output without buffering in memory.
+   *
    * @param request the JSON-RPC request with method="prompts/get"
-   * @return JSON-RPC response with prompt result
+   * @param response the HTTP response to stream to
+   * @throws IOException if streaming fails
    */
   @PostMapping("${mcp.server.basePath:/mcp}/prompts/get")
-  public JsonRpcResponse getPrompt(@RequestBody JsonRpcRequest request) {
+  public void getPrompt(@RequestBody JsonRpcRequest request, HttpServletResponse response)
+      throws IOException {
     String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
     logger.debug("Received prompts/get request: method={}, id={}", request.method(), requestId);
 
@@ -349,7 +519,17 @@ public class McpTransportController {
             JsonRpcError.INVALID_PARAMS,
             "Missing required parameter: name",
             null);
-        return JsonRpcResponse.error(request.id(), error);
+        JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+        StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+        response.setContentType(streamable.getContentType());
+        if (streamable.getContentLength() > 0) {
+          response.setContentLength((int) streamable.getContentLength());
+        }
+        response.setStatus(200);
+        streamable.writeTo(response.getOutputStream());
+        return;
       }
 
       String promptName = (String) request.params().get("name");
@@ -359,20 +539,31 @@ public class McpTransportController {
 
       McpPromptResult result = dispatcher.dispatchPrompt(promptName, arguments);
 
+      JsonRpcResponse jsonRpcResponse;
       if (result.isError()) {
         JsonRpcError error = new JsonRpcError(
             JsonRpcError.METHOD_NOT_FOUND,
             extractErrorMessage(result),
             null);
-        return JsonRpcResponse.error(request.id(), error);
+        jsonRpcResponse = JsonRpcResponse.error(request.id(), error);
       } else {
         Map<String, Object> resultMap = Map.of(
             "content", result.content().stream()
                 .map(c -> Map.of("type", c.type(), "text", c.text()))
                 .toList()
         );
-        return JsonRpcResponse.success(request.id(), resultMap);
+        jsonRpcResponse = JsonRpcResponse.success(request.id(), resultMap);
       }
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(jsonRpcResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     } catch (Exception e) {
       // Security: Return generic error message to client
       String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "invoke prompt");
@@ -380,7 +571,16 @@ public class McpTransportController {
           JsonRpcError.INTERNAL_ERROR,
           sanitizedMessage,
           null);
-      return JsonRpcResponse.error(request.id(), error);
+      JsonRpcResponse errorResponse = JsonRpcResponse.error(request.id(), error);
+      @SuppressWarnings("unchecked")
+      Map<String, Object> responseMap = objectMapper.convertValue(errorResponse, Map.class);
+      StreamableResponse streamable = StreamableResponse.jsonRpc(responseMap);
+      response.setContentType(streamable.getContentType());
+      if (streamable.getContentLength() > 0) {
+        response.setContentLength((int) streamable.getContentLength());
+      }
+      response.setStatus(200);
+      streamable.writeTo(response.getOutputStream());
     }
   }
 
