@@ -19,8 +19,12 @@ import org.springframework.stereotype.Component;
  *   <li>Increments "mcp.tool.invocations" counter with tags (tool-name, status)
  *   <li>Records "mcp.tool.duration" timer
  *   <li>Logs structured information about tool invocations
- *   <li>Filters sensitive parameters (marked with @McpInput(sensitive=true))
+ *   <li>Excludes sensitive parameters from metrics and logs
  * </ul>
+ *
+ * <p>Security: Sensitive parameters marked with @McpInput(sensitive=true) are never included
+ * in observability data (metric tags, counters, or log entries). Argument values are not
+ * recorded in metrics. See SensitiveParameterFilter for parameter-level filtering strategy.
  */
 @Aspect
 @Component

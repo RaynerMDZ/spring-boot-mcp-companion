@@ -10,9 +10,11 @@ import com.raynermendez.spring_boot_mcp_companion.model.McpPromptDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpResourceDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpToolDefinition;
 import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry;
+import com.raynermendez.spring_boot_mcp_companion.security.ErrorMessageSanitizer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,16 +46,19 @@ public class McpTransportController {
   private final McpDispatcher dispatcher;
   private final McpDefinitionRegistry registry;
   private final McpServerProperties properties;
+  private final ErrorMessageSanitizer errorSanitizer;
   private final String basePath;
 
   @Autowired
   public McpTransportController(
       McpDispatcher dispatcher,
       McpDefinitionRegistry registry,
-      McpServerProperties properties) {
+      McpServerProperties properties,
+      ErrorMessageSanitizer errorSanitizer) {
     this.dispatcher = dispatcher;
     this.registry = registry;
     this.properties = properties;
+    this.errorSanitizer = errorSanitizer;
     this.basePath = properties.basePath();
     logger.info("MCP Transport Controller initialized at base path: {}", basePath);
   }
@@ -66,7 +71,8 @@ public class McpTransportController {
    */
   @PostMapping("${mcp.server.basePath:/mcp}/tools/list")
   public JsonRpcResponse listTools(@RequestBody JsonRpcRequest request) {
-    logger.debug("Received tools/list request with id: {}", request.id());
+    String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
+    logger.debug("Received tools/list request with id: {}", requestId);
 
     try {
       List<McpToolDefinition> tools = registry.getTools();
@@ -76,10 +82,11 @@ public class McpTransportController {
 
       return JsonRpcResponse.success(request.id(), Map.of("tools", toolList));
     } catch (Exception e) {
-      logger.error("Error listing tools", e);
+      // Security: Return generic error message to client
+      String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "list tools");
       JsonRpcError error = new JsonRpcError(
           JsonRpcError.INTERNAL_ERROR,
-          "Failed to list tools: " + e.getMessage(),
+          sanitizedMessage,
           null);
       return JsonRpcResponse.error(request.id(), error);
     }
@@ -93,7 +100,8 @@ public class McpTransportController {
    */
   @PostMapping("${mcp.server.basePath:/mcp}/tools/call")
   public JsonRpcResponse callTool(@RequestBody JsonRpcRequest request) {
-    logger.debug("Received tools/call request: method={}, id={}", request.method(), request.id());
+    String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
+    logger.debug("Received tools/call request: method={}, id={}", request.method(), requestId);
 
     try {
       // Validate JSON-RPC structure
@@ -129,10 +137,11 @@ public class McpTransportController {
         return JsonRpcResponse.success(request.id(), resultMap);
       }
     } catch (Exception e) {
-      logger.error("Error calling tool", e);
+      // Security: Return generic error message to client
+      String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "call tool");
       JsonRpcError error = new JsonRpcError(
           JsonRpcError.INTERNAL_ERROR,
-          "Tool invocation failed: " + e.getMessage(),
+          sanitizedMessage,
           null);
       return JsonRpcResponse.error(request.id(), error);
     }
@@ -173,7 +182,8 @@ public class McpTransportController {
    */
   @PostMapping("${mcp.server.basePath:/mcp}/resources/list")
   public JsonRpcResponse listResources(@RequestBody JsonRpcRequest request) {
-    logger.debug("Received resources/list request with id: {}", request.id());
+    String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
+    logger.debug("Received resources/list request with id: {}", requestId);
 
     try {
       List<McpResourceDefinition> resources = registry.getResources();
@@ -183,10 +193,11 @@ public class McpTransportController {
 
       return JsonRpcResponse.success(request.id(), Map.of("resources", resourceList));
     } catch (Exception e) {
-      logger.error("Error listing resources", e);
+      // Security: Return generic error message to client
+      String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "list resources");
       JsonRpcError error = new JsonRpcError(
           JsonRpcError.INTERNAL_ERROR,
-          "Failed to list resources: " + e.getMessage(),
+          sanitizedMessage,
           null);
       return JsonRpcResponse.error(request.id(), error);
     }
@@ -200,7 +211,8 @@ public class McpTransportController {
    */
   @PostMapping("${mcp.server.basePath:/mcp}/resources/read")
   public JsonRpcResponse readResource(@RequestBody JsonRpcRequest request) {
-    logger.debug("Received resources/read request: method={}, id={}", request.method(), request.id());
+    String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
+    logger.debug("Received resources/read request: method={}, id={}", request.method(), requestId);
 
     try {
       if (request.params() == null || !request.params().containsKey("uri")) {
@@ -233,10 +245,11 @@ public class McpTransportController {
         return JsonRpcResponse.success(request.id(), resultMap);
       }
     } catch (Exception e) {
-      logger.error("Error reading resource", e);
+      // Security: Return generic error message to client
+      String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "read resource");
       JsonRpcError error = new JsonRpcError(
           JsonRpcError.INTERNAL_ERROR,
-          "Resource read failed: " + e.getMessage(),
+          sanitizedMessage,
           null);
       return JsonRpcResponse.error(request.id(), error);
     }
@@ -250,7 +263,8 @@ public class McpTransportController {
    */
   @PostMapping("${mcp.server.basePath:/mcp}/prompts/list")
   public JsonRpcResponse listPrompts(@RequestBody JsonRpcRequest request) {
-    logger.debug("Received prompts/list request with id: {}", request.id());
+    String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
+    logger.debug("Received prompts/list request with id: {}", requestId);
 
     try {
       List<McpPromptDefinition> prompts = registry.getPrompts();
@@ -260,10 +274,11 @@ public class McpTransportController {
 
       return JsonRpcResponse.success(request.id(), Map.of("prompts", promptList));
     } catch (Exception e) {
-      logger.error("Error listing prompts", e);
+      // Security: Return generic error message to client
+      String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "list prompts");
       JsonRpcError error = new JsonRpcError(
           JsonRpcError.INTERNAL_ERROR,
-          "Failed to list prompts: " + e.getMessage(),
+          sanitizedMessage,
           null);
       return JsonRpcResponse.error(request.id(), error);
     }
@@ -277,7 +292,8 @@ public class McpTransportController {
    */
   @PostMapping("${mcp.server.basePath:/mcp}/prompts/get")
   public JsonRpcResponse getPrompt(@RequestBody JsonRpcRequest request) {
-    logger.debug("Received prompts/get request: method={}, id={}", request.method(), request.id());
+    String requestId = request.id() != null ? request.id().toString() : UUID.randomUUID().toString();
+    logger.debug("Received prompts/get request: method={}, id={}", request.method(), requestId);
 
     try {
       if (request.params() == null || !request.params().containsKey("name")) {
@@ -310,10 +326,11 @@ public class McpTransportController {
         return JsonRpcResponse.success(request.id(), resultMap);
       }
     } catch (Exception e) {
-      logger.error("Error invoking prompt", e);
+      // Security: Return generic error message to client
+      String sanitizedMessage = errorSanitizer.sanitize(e, requestId, "invoke prompt");
       JsonRpcError error = new JsonRpcError(
           JsonRpcError.INTERNAL_ERROR,
-          "Prompt invocation failed: " + e.getMessage(),
+          sanitizedMessage,
           null);
       return JsonRpcResponse.error(request.id(), error);
     }

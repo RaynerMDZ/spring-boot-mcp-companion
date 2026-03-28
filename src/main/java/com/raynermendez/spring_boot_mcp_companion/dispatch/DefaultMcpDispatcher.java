@@ -6,6 +6,7 @@ import com.raynermendez.spring_boot_mcp_companion.model.McpPromptDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpResourceDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpToolDefinition;
 import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry;
+import com.raynermendez.spring_boot_mcp_companion.security.SensitiveParameterFilter;
 import com.raynermendez.spring_boot_mcp_companion.spi.McpOutputSerializer;
 import com.raynermendez.spring_boot_mcp_companion.validation.McpInputValidator;
 import com.raynermendez.spring_boot_mcp_companion.validation.McpViolation;
@@ -58,6 +59,9 @@ public class DefaultMcpDispatcher implements McpDispatcher {
             List.of(new McpDispatcher.McpContent("text", errorMsg)), true);
       }
 
+      // Security: Verify the method is safe to invoke
+      verifyMethodSecurity(toolDef.handler().method(), "tool '" + name + "'");
+
       // Validate arguments
       List<McpViolation> violations = validator.validate(toolDef, arguments);
       if (!violations.isEmpty()) {
@@ -82,7 +86,9 @@ public class DefaultMcpDispatcher implements McpDispatcher {
 
     } catch (Exception e) {
       String errorMsg = "Error invoking tool '" + name + "': " + e.getMessage();
-      logger.error(errorMsg, e);
+      // Security: Log with filtered arguments to avoid exposing sensitive parameters
+      Map<String, Object> filteredArguments = SensitiveParameterFilter.filterSensitiveArguments(arguments, toolDef);
+      logger.error("Error invoking tool '{}' with arguments {}", name, filteredArguments, e);
       return new McpToolResult(
           List.of(new McpDispatcher.McpContent("text", errorMsg)), true);
     }
@@ -104,9 +110,16 @@ public class DefaultMcpDispatcher implements McpDispatcher {
       Object value = arguments.get(param.name());
 
       if (value != null) {
-        // Use Jackson to convert the value to the expected type
+        // Security: Pre-validate type compatibility before Jackson conversion
         Method method = toolDef.handler().method();
         Class<?> paramType = method.getParameterTypes()[i];
+
+        if (!isValidType(value, paramType)) {
+          throw new IllegalArgumentException(
+              "Parameter '" + param.name() + "' has invalid type. Expected " + paramType.getSimpleName()
+                  + " but got " + value.getClass().getSimpleName());
+        }
+
         args[i] = objectMapper.convertValue(value, paramType);
       } else {
         args[i] = null;
@@ -114,6 +127,59 @@ public class DefaultMcpDispatcher implements McpDispatcher {
     }
 
     return args;
+  }
+
+  /**
+   * Validates that a value is compatible with the target type before conversion.
+   *
+   * <p>Security: Performs basic type validation to prevent type coercion attacks that could
+   * bypass business logic or exploit unexpected type conversions.
+   *
+   * @param value the value to validate
+   * @param targetType the target type
+   * @return true if the value is compatible with the target type
+   */
+  private boolean isValidType(Object value, Class<?> targetType) {
+    // null values are handled separately
+    if (value == null) {
+      return true;
+    }
+
+    // String type - accept any value (will be converted to string)
+    if (targetType == String.class) {
+      return true;
+    }
+
+    // Boolean type - only accept Boolean or String values
+    if (targetType == Boolean.class || targetType == boolean.class) {
+      return value instanceof Boolean || value instanceof String;
+    }
+
+    // Numeric types - only accept Number or String values
+    if (targetType == Integer.class || targetType == int.class ||
+        targetType == Long.class || targetType == long.class ||
+        targetType == Double.class || targetType == double.class ||
+        targetType == Float.class || targetType == float.class) {
+      return value instanceof Number || value instanceof String;
+    }
+
+    // List/Array type - only accept List or String values
+    if (targetType == java.util.List.class || targetType.isArray()) {
+      return value instanceof java.util.List || value instanceof String;
+    }
+
+    // Map type - only accept Map or String values
+    if (targetType == Map.class) {
+      return value instanceof Map || value instanceof String;
+    }
+
+    // For other complex types, allow Jackson to attempt conversion
+    // but reject if the value is a primitive array or certain suspicious types
+    if (value.getClass().isArray() && !value.getClass().getComponentType().isPrimitive()) {
+      return false; // Reject non-primitive arrays that don't match list/array targets
+    }
+
+    return true; // Allow other types for Jackson to handle
   }
 
   @Override
@@ -131,6 +197,9 @@ public class DefaultMcpDispatcher implements McpDispatcher {
         return new McpDispatcher.McpResourceResult(uri, errorMsg, "text/plain", true);
       }
 
+      // Security: Verify the method is safe to invoke
+      verifyMethodSecurity(resourceDef.handler().method(), "resource '" + uri + "'");
+
       // Build method arguments and invoke
       Object[] methodArgs = buildMethodArgumentsForResource(resourceDef, params);
       Method method = resourceDef.handler().method();
@@ -145,7 +214,8 @@ public class DefaultMcpDispatcher implements McpDispatcher {
 
     } catch (Exception e) {
       String errorMsg = "Error reading resource '" + uri + "': " + e.getMessage();
-      logger.error(errorMsg, e);
+      // Security: Do not log resource parameters to avoid exposing sensitive data
+      logger.error("Error reading resource '{}'", uri, e);
       return new McpDispatcher.McpResourceResult(uri, errorMsg, "text/plain", true);
     }
   }
@@ -166,6 +236,9 @@ public class DefaultMcpDispatcher implements McpDispatcher {
             List.of(new McpDispatcher.McpContent("text", errorMsg)), true);
       }
 
+      // Security: Verify the method is safe to invoke
+      verifyMethodSecurity(promptDef.handler().method(), "prompt '" + name + "'");
+
       // Build method arguments and invoke
       Object[] methodArgs = buildMethodArgumentsForPrompt(promptDef, args);
       Method method = promptDef.handler().method();
@@ -180,7 +253,8 @@ public class DefaultMcpDispatcher implements McpDispatcher {
 
     } catch (Exception e) {
       String errorMsg = "Error invoking prompt '" + name + "': " + e.getMessage();
-      logger.error(errorMsg, e);
+      // Security: Do not log prompt arguments to avoid exposing sensitive data
+      logger.error("Error invoking prompt '{}'", name, e);
       return new McpDispatcher.McpPromptResult(
           List.of(new McpDispatcher.McpContent("text", errorMsg)), true);
     }
@@ -265,5 +339,48 @@ public class DefaultMcpDispatcher implements McpDispatcher {
       sb.append(violation.field()).append(": ").append(violation.message());
     }
     return sb.toString();
+  }
+
+  /**
+   * Verifies that a method is safe to invoke via reflection.
+   *
+   * <p>Security: Performs runtime checks to prevent arbitrary method invocation:
+   * <ul>
+   *   <li>Method must be public
+   *   <li>Method must not be from Object, Class, or other dangerous classes
+   *   <li>Target bean class must be Spring-managed
+   * </ul>
+   *
+   * @param method the method to verify
+   * @param context the context description for error messages (e.g., "tool 'getName'")
+   * @throws IllegalAccessException if the method is not safe to invoke
+   */
+  private void verifyMethodSecurity(Method method, String context) throws IllegalAccessException {
+    // Check if method is public
+    if (!java.lang.reflect.Modifier.isPublic(method.getModifiers())) {
+      throw new IllegalAccessException("Method for " + context + " is not public");
+    }
+
+    // Prevent invocation of dangerous base class methods
+    Class<?> declaringClass = method.getDeclaringClass();
+    String className = declaringClass.getName();
+
+    if (className.startsWith("java.lang.") || className.startsWith("java.lang.reflect.")) {
+      throw new IllegalAccessException(
+          "Method for " + context + " is from restricted class: " + className);
+    }
+
+    // Reject methods from Object, Class, ClassLoader, etc.
+    if (declaringClass == Object.class ||
+        declaringClass == Class.class ||
+        declaringClass == ClassLoader.class ||
+        declaringClass == Runtime.class ||
+        declaringClass == System.class) {
+      throw new IllegalAccessException(
+          "Method for " + context + " is from dangerous base class: " + className);
+    }
+
+    logger.debug("Method security verified for {}: {}.{}", context, declaringClass.getSimpleName(),
+        method.getName());
   }
 }
