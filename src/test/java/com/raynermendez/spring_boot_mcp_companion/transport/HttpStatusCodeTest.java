@@ -50,8 +50,8 @@ class HttpStatusCodeTest {
         // Act
         HttpStatus status = mapper.getHttpStatus(-32601);
 
-        // Assert
-        assertEquals(HttpStatus.NOT_FOUND, status);
+        // Assert - Method not found is a client error (400), not a resource error (404)
+        assertEquals(HttpStatus.BAD_REQUEST, status);
     }
 
     @Test
@@ -135,7 +135,7 @@ class HttpStatusCodeTest {
         // Test all JSON-RPC 2.0 standard error codes
         assertEquals(HttpStatus.BAD_REQUEST, mapper.getHttpStatus(-32700)); // Parse error
         assertEquals(HttpStatus.BAD_REQUEST, mapper.getHttpStatus(-32600)); // Invalid Request
-        assertEquals(HttpStatus.NOT_FOUND, mapper.getHttpStatus(-32601));   // Method not found
+        assertEquals(HttpStatus.BAD_REQUEST, mapper.getHttpStatus(-32601)); // Method not found (client error, not 404)
         assertEquals(HttpStatus.BAD_REQUEST, mapper.getHttpStatus(-32602)); // Invalid params
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, mapper.getHttpStatus(-32603)); // Internal error
     }

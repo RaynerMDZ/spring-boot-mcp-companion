@@ -58,6 +58,7 @@ class PerformanceLoadTest {
 
     McpToolDefinition tool = new McpToolDefinition(
         "perf_test_tool",
+        "Performance Test Tool",
         "Performance test tool",
         new String[]{},
         params,

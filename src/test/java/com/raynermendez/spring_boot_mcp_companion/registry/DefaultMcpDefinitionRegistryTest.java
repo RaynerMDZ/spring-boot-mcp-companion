@@ -38,6 +38,7 @@ class DefaultMcpDefinitionRegistryTest {
     McpToolDefinition tool =
         new McpToolDefinition(
             "testTool",
+            "Test Tool",
             "A test tool",
             new String[0],
             List.of(),
@@ -54,6 +55,7 @@ class DefaultMcpDefinitionRegistryTest {
     McpToolDefinition tool1 =
         new McpToolDefinition(
             "sameName",
+            "Same Name Tool",
             "First tool",
             new String[0],
             List.of(),
@@ -62,6 +64,7 @@ class DefaultMcpDefinitionRegistryTest {
     McpToolDefinition tool2 =
         new McpToolDefinition(
             "sameName",
+            "Same Name Tool",
             "Second tool",
             new String[0],
             List.of(),
@@ -94,9 +97,9 @@ class DefaultMcpDefinitionRegistryTest {
   @Test
   void testRegisterPromptWithDuplicateNameThrowsException() {
     McpPromptDefinition prompt1 =
-        new McpPromptDefinition("sameName", "First prompt", List.of(), mockHandler);
+        new McpPromptDefinition("sameName", "Same Name Prompt", "First prompt", List.of(), mockHandler);
     McpPromptDefinition prompt2 =
-        new McpPromptDefinition("sameName", "Second prompt", List.of(), mockHandler);
+        new McpPromptDefinition("sameName", "Same Name Prompt", "Second prompt", List.of(), mockHandler);
 
     registry.register(prompt1);
 
@@ -119,6 +122,7 @@ class DefaultMcpDefinitionRegistryTest {
     McpToolDefinition tool =
         new McpToolDefinition(
             "toolAfterLock",
+            "Tool After Lock",
             "A tool after lock",
             new String[0],
             List.of(),
@@ -135,6 +139,7 @@ class DefaultMcpDefinitionRegistryTest {
     McpToolDefinition tool =
         new McpToolDefinition(
             "myTool",
+            "My Tool",
             "A test tool",
             new String[0],
             List.of(),
@@ -164,7 +169,7 @@ class DefaultMcpDefinitionRegistryTest {
   @Test
   void testGetPromptsReturnsRegisteredPrompts() {
     McpPromptDefinition prompt =
-        new McpPromptDefinition("myPrompt", "A test prompt", List.of(), mockHandler);
+        new McpPromptDefinition("myPrompt", "My Prompt", "A test prompt", List.of(), mockHandler);
 
     registry.register(prompt);
 
@@ -178,6 +183,7 @@ class DefaultMcpDefinitionRegistryTest {
     McpToolDefinition tool =
         new McpToolDefinition(
             "tool1",
+            "Tool 1",
             "A test tool",
             new String[0],
             List.of(),

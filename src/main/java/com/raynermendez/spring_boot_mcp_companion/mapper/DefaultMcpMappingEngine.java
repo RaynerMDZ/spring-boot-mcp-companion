@@ -55,7 +55,10 @@ public class DefaultMcpMappingEngine implements McpMappingEngine {
     // Create method handler reference
     MethodHandlerRef handler = new MethodHandlerRef(bean, method, bean.getClass().getSimpleName());
 
-    return new McpToolDefinition(toolName, description, tags, parameters, inputSchema, handler);
+    // Derive title from tool name (convert snake_case to Title Case)
+    String title = toTitleCase(toolName);
+
+    return new McpToolDefinition(toolName, title, description, tags, parameters, inputSchema, handler);
   }
 
   @Override
@@ -91,7 +94,10 @@ public class DefaultMcpMappingEngine implements McpMappingEngine {
 
     MethodHandlerRef handler = new MethodHandlerRef(bean, method, bean.getClass().getSimpleName());
 
-    return new McpPromptDefinition(promptName, description, arguments, handler);
+    // Derive title from prompt name (convert snake_case to Title Case)
+    String title = toTitleCase(promptName);
+
+    return new McpPromptDefinition(promptName, title, description, arguments, handler);
   }
 
   /**
@@ -102,6 +108,32 @@ public class DefaultMcpMappingEngine implements McpMappingEngine {
    */
   private String methodNameToSnakeCase(String methodName) {
     return methodName.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+  }
+
+  /**
+   * Converts snake_case or space-separated string to Title Case.
+   * Examples: "get_user" → "Get User", "weather_forecast" → "Weather Forecast"
+   *
+   * @param input the snake_case or space-separated string
+   * @return the Title Case version
+   */
+  private String toTitleCase(String input) {
+    if (input == null || input.isEmpty()) {
+      return "";
+    }
+    // Replace underscores and hyphens with spaces
+    String withSpaces = input.replaceAll("[_-]", " ");
+    // Split and capitalize each word
+    String[] words = withSpaces.split("\\s+");
+    StringBuilder result = new StringBuilder();
+    for (String word : words) {
+      if (!word.isEmpty()) {
+        result.append(Character.toUpperCase(word.charAt(0)))
+            .append(word.substring(1));
+        result.append(" ");
+      }
+    }
+    return result.toString().trim();
   }
 
   /**

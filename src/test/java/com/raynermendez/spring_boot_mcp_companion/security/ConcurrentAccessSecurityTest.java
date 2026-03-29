@@ -54,6 +54,7 @@ class ConcurrentAccessSecurityTest {
 
     McpToolDefinition tool = new McpToolDefinition(
         "test_tool",
+        "Test Tool",
         "Test tool",
         new String[]{},
         params,

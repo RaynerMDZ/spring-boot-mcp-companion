@@ -46,6 +46,7 @@ class SensitiveParameterFilterTest {
 
     toolDefWithSensitiveParams = new McpToolDefinition(
         "test_tool",
+        "Test Tool",
         "Test tool",
         new String[]{},
         params,
@@ -61,6 +62,7 @@ class SensitiveParameterFilterTest {
 
     toolDefNoSensitiveParams = new McpToolDefinition(
         "safe_tool",
+        "Safe Tool",
         "Safe tool",
         new String[]{},
         noSensitiveParams,

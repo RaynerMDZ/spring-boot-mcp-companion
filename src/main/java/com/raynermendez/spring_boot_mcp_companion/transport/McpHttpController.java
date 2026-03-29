@@ -328,6 +328,10 @@ public class McpHttpController {
         Map<String, Object> clientCapabilities = (Map<String, Object>) paramsMap.get("capabilities");
 
         // Validate protocol version
+        // NOTE: Using exact version match (conservative approach for spec compliance)
+        // MCP spec says "compatible" but doesn't define compatibility rules.
+        // For initial implementation, exact match prevents version mismatch issues.
+        // Can be relaxed to semantic version matching if needed in future.
         if (clientVersion == null || !clientVersion.equals(properties.protocolVersion())) {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -362,24 +366,20 @@ public class McpHttpController {
             "listChanged", true  // Server sends prompts/list_changed notifications
         ));
 
-        // Client primitive support: Declare which client primitives this server uses
-        // Note: Requires matching client capability declaration in initialize request
+        // Client primitive support: Declare which client primitives this server WILL USE
+        // Per MCP spec: Server capabilities declare what SERVER can do (including client primitive usage)
+        // This is INDEPENDENT of client capabilities - server decides its own usage patterns
         // Sampling: Server can request LLM completions from client
         // Elicitation: Server can request user input from client
         // Logging: Server can send log messages to client
         // Note: In HTTP Streamable Transport, client primitives are sent as notifications
         // rather than request-response like Stdio transport (architectural limitation)
-        if (clientCapabilities != null) {
-            if (clientCapabilities.containsKey("sampling")) {
-                serverCapabilities.put("sampling", clientCapabilities.get("sampling"));
-            }
-            if (clientCapabilities.containsKey("elicitation")) {
-                serverCapabilities.put("elicitation", clientCapabilities.get("elicitation"));
-            }
-            if (clientCapabilities.containsKey("logging")) {
-                serverCapabilities.put("logging", clientCapabilities.get("logging"));
-            }
-        }
+        //
+        // CRITICAL FIX: Server declares ITS OWN intent to use these primitives,
+        // NOT echo what client declared. This is semantic correctness per MCP spec.
+        serverCapabilities.put("sampling", Map.of());    // Server will use sampling
+        serverCapabilities.put("elicitation", Map.of()); // Server will use elicitation
+        serverCapabilities.put("logging", Map.of());     // Server will use logging
 
         // Create session (stores client info and negotiated capabilities)
         McpSession session = sessionManager.createSession(clientVersion, clientInfo, serverCapabilities);
@@ -573,7 +573,11 @@ public class McpHttpController {
         session.subscribe(uri, subscriptionId);
 
         logger.info("Client subscribed to resource: uri={}, subscriptionId={}", uri, subscriptionId);
-        return Map.of();
+
+        // CRITICAL FIX: Return subscriptionId to client for confirmation
+        // Per MCP spec "Subscription confirmation" - client needs this ID to track subscription
+        // and potentially unsubscribe or distinguish multiple subscriptions to same resource
+        return Map.of("subscriptionId", subscriptionId);
     }
 
     /**

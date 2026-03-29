@@ -10,12 +10,16 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>-32700: Parse error → 400 Bad Request
  *   <li>-32600: Invalid Request → 400 Bad Request
- *   <li>-32601: Method not found → 404 Not Found
+ *   <li>-32601: Method not found → 400 Bad Request (client sent invalid method name)
  *   <li>-32602: Invalid params → 400 Bad Request
  *   <li>-32603: Internal error → 500 Internal Server Error
  *   <li>-32000 to -32099: Server error → 500 Internal Server Error
  *   <li>null/no error: Success → 200 OK or 202 Accepted
  * </ul>
+ *
+ * <p><strong>Semantic Note</strong>: JSON-RPC -32601 (method not found) is a client error
+ * indicating an invalid protocol method, NOT an HTTP resource error. Thus 400 Bad Request
+ * is semantically correct, not 404 Not Found.
  *
  * @author Rayner Mendez
  */
@@ -40,8 +44,9 @@ public class HttpStatusMapper {
             // Invalid Request
             case -32600 -> HttpStatus.BAD_REQUEST;
 
-            // Method not found
-            case -32601 -> HttpStatus.NOT_FOUND;
+            // Method not found - FIX: Use 400 (client error) not 404 (resource error)
+            // JSON-RPC method not found = client sent invalid method name, not HTTP resource issue
+            case -32601 -> HttpStatus.BAD_REQUEST;
 
             // Invalid params
             case -32602 -> HttpStatus.BAD_REQUEST;

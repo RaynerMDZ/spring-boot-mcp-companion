@@ -59,7 +59,8 @@ class McpHttpControllerTest {
             objectMapper,
             notificationManager,
             sessionManager,
-            statusMapper
+            statusMapper,
+            mock(com.raynermendez.spring_boot_mcp_companion.prompt.PromptArgumentValidator.class)
         );
     }
 
