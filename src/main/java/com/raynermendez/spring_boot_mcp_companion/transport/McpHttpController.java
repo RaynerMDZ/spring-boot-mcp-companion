@@ -15,6 +15,7 @@ import com.raynermendez.spring_boot_mcp_companion.transport.model.JsonRpcError;
 import com.raynermendez.spring_boot_mcp_companion.transport.model.JsonRpcRequest;
 import com.raynermendez.spring_boot_mcp_companion.transport.model.JsonRpcResponse;
 import com.raynermendez.spring_boot_mcp_companion.config.McpServerProperties;
+import com.raynermendez.spring_boot_mcp_companion.notification.SseNotificationManager;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,9 +25,11 @@ import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * MCP HTTP Controller implementing MCP 2025-06-18 specification.
@@ -65,18 +68,21 @@ public class McpHttpController {
 	private final McpServerProperties properties;
 	private final ErrorMessageSanitizer errorSanitizer;
 	private final ObjectMapper objectMapper;
+	private final SseNotificationManager sseNotificationManager;
 
 	public McpHttpController(
 			McpDispatcher dispatcher,
 			McpDefinitionRegistry registry,
 			McpServerProperties properties,
 			ErrorMessageSanitizer errorSanitizer,
-			ObjectMapper objectMapper) {
+			ObjectMapper objectMapper,
+			SseNotificationManager sseNotificationManager) {
 		this.dispatcher = dispatcher;
 		this.registry = registry;
 		this.properties = properties;
 		this.errorSanitizer = errorSanitizer;
 		this.objectMapper = objectMapper;
+		this.sseNotificationManager = sseNotificationManager;
 	}
 
 	/**
@@ -440,5 +446,45 @@ public class McpHttpController {
 			}
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Server-Sent Events (SSE) endpoint for receiving real-time notifications.
+	 *
+	 * <p>Clients can connect to this endpoint to receive push notifications when
+	 * tools, resources, or prompts change on the server.
+	 *
+	 * <p>Usage:
+	 * <pre>
+	 * GET /mcp/stream?clientId=unique-client-id
+	 * Accept: text/event-stream
+	 * </pre>
+	 *
+	 * @param clientId unique identifier for the client
+	 * @return SSE emitter for streaming notifications
+	 */
+	@GetMapping("/mcp/stream")
+	public SseEmitter getNotificationStream(String clientId) {
+		if (clientId == null || clientId.isEmpty()) {
+			clientId = UUID.randomUUID().toString();
+		}
+
+		logger.info("Client connected to SSE stream: {}", clientId);
+
+		// 5 minute timeout
+		SseEmitter emitter = sseNotificationManager.createEmitter(clientId, 5 * 60 * 1000);
+
+		try {
+			// Send initial connection confirmation
+			emitter.send(SseEmitter.event()
+					.id("connected")
+					.data("Connected to MCP notification stream")
+					.build());
+		} catch (IOException e) {
+			logger.warn("Failed to send SSE initial message: {}", e.getMessage());
+			sseNotificationManager.removeEmitter(clientId);
+		}
+
+		return emitter;
 	}
 }
