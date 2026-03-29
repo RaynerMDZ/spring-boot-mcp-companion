@@ -12,6 +12,7 @@ import com.raynermendez.spring_boot_mcp_companion.model.McpResourceDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpResourceTemplate;
 import com.raynermendez.spring_boot_mcp_companion.model.McpToolDefinition;
 import com.raynermendez.spring_boot_mcp_companion.notification.SseNotificationManager;
+import com.raynermendez.spring_boot_mcp_companion.prompt.PromptArgumentValidator;
 import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry;
 import com.raynermendez.spring_boot_mcp_companion.security.ErrorMessageSanitizer;
 import com.raynermendez.spring_boot_mcp_companion.session.McpSession;
@@ -85,6 +86,7 @@ public class McpHttpController {
     private final SseNotificationManager notificationManager;
     private final McpSessionManager sessionManager;
     private final HttpStatusMapper statusMapper;
+    private final PromptArgumentValidator promptValidator;
 
     public McpHttpController(
         McpDispatcher dispatcher,
@@ -94,7 +96,8 @@ public class McpHttpController {
         ObjectMapper objectMapper,
         SseNotificationManager notificationManager,
         McpSessionManager sessionManager,
-        HttpStatusMapper statusMapper
+        HttpStatusMapper statusMapper,
+        PromptArgumentValidator promptValidator
     ) {
         this.dispatcher = dispatcher;
         this.registry = registry;
@@ -104,6 +107,7 @@ public class McpHttpController {
         this.notificationManager = notificationManager;
         this.sessionManager = sessionManager;
         this.statusMapper = statusMapper;
+        this.promptValidator = promptValidator;
     }
 
     /**
@@ -596,8 +600,8 @@ public class McpHttpController {
     /**
      * Handles prompts/list request.
      *
-     * <p>Returns all available prompts with their metadata including name, title, and description
-     * (MCP 2025-11-25 spec compliant).
+     * <p>Returns all available prompts with their metadata including name, title, description,
+     * and argument schema (MCP 2025-11-25 spec compliant).
      */
     private Object handlePromptsList(JsonRpcRequest request) {
         List<Map<String, Object>> promptsList = new ArrayList<>();
@@ -605,8 +609,14 @@ public class McpHttpController {
         for (McpPromptDefinition prompt : registry.getPrompts()) {
             Map<String, Object> promptMap = new HashMap<>();
             promptMap.put("name", prompt.name());
-            promptMap.put("title", prompt.title());  // ADDED: MCP spec requires title field
+            promptMap.put("title", prompt.title());
             promptMap.put("description", prompt.description());
+
+            // Include argument schema if prompt accepts arguments (MCP spec requirement)
+            if (prompt.arguments() != null && !prompt.arguments().isEmpty()) {
+                promptMap.put("argumentSchema", promptValidator.buildArgumentSchema(prompt));
+            }
+
             promptsList.add(promptMap);
         }
 
@@ -615,6 +625,14 @@ public class McpHttpController {
 
     /**
      * Handles prompts/get request.
+     *
+     * <p>This method implements MCP 2025-11-25 specification for prompt templates:
+     * <ul>
+     *   <li>Validates arguments against prompt definition
+     *   <li>Performs variable substitution in template text
+     *   <li>Returns properly formatted message response
+     *   <li>Includes argument schema for documentation
+     * </ul>
      */
     private Object handlePromptsGet(JsonRpcRequest request) {
         Object params = request.params();
@@ -630,21 +648,53 @@ public class McpHttpController {
             return createJsonRpcErrorResponse(request.id(), -32602, "Missing prompt name");
         }
 
-        // Dispatch prompt retrieval
-        McpPromptResult result = dispatcher.dispatchPrompt(promptName, arguments != null ? arguments : Map.of());
+        // Find prompt definition for validation
+        McpPromptDefinition promptDef = registry.getPrompts().stream()
+            .filter(p -> p.name().equals(promptName))
+            .findFirst()
+            .orElse(null);
+
+        // Validate arguments against prompt definition (MCP spec requirement)
+        Map<String, Object> validatedArgs = arguments != null ? arguments : Map.of();
+        if (promptDef != null) {
+            PromptArgumentValidator.ValidationResult validation =
+                promptValidator.validateArguments(promptDef, validatedArgs);
+            if (validation.hasErrors()) {
+                logger.warn("Invalid prompt arguments for {}: {}", promptName, validation.getErrors());
+                return createJsonRpcErrorResponse(request.id(), -32602,
+                    "Invalid prompt arguments: " + validation.getErrorMessage());
+            }
+        }
+
+        // Dispatch prompt retrieval with validated arguments
+        McpPromptResult result = dispatcher.dispatchPrompt(promptName, validatedArgs);
 
         if (result.isError()) {
             return createJsonRpcErrorResponse(request.id(), -32000, contentToString(result.content()));
+        }
+
+        // Perform variable substitution in prompt text (MCP spec requirement)
+        String promptText = contentToString(result.content());
+        if (promptDef != null && !validatedArgs.isEmpty()) {
+            promptText = promptValidator.substituteVariables(promptText, validatedArgs);
+            logger.debug("Substituted variables in prompt {}: {} args applied", promptName, validatedArgs.size());
+        }
+
+        // Build response with argument schema (MCP spec)
+        Map<String, Object> promptContentMap = new HashMap<>();
+        promptContentMap.put("type", "text");
+        promptContentMap.put("text", promptText);
+
+        if (promptDef != null && promptDef.arguments() != null && !promptDef.arguments().isEmpty()) {
+            Map<String, Object> argSchema = promptValidator.buildArgumentSchema(promptDef);
+            promptContentMap.put("argumentSchema", argSchema);
         }
 
         return Map.of(
             "messages", List.of(
                 Map.of(
                     "role", "user",
-                    "content", Map.of(
-                        "type", "text",
-                        "text", contentToString(result.content())
-                    )
+                    "content", promptContentMap
                 )
             )
         );
