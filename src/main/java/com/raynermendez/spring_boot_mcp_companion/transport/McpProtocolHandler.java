@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raynermendez.spring_boot_mcp_companion.connection.ConnectionState;
 import com.raynermendez.spring_boot_mcp_companion.connection.McpConnection;
 import com.raynermendez.spring_boot_mcp_companion.config.McpServerProperties;
+import com.raynermendez.spring_boot_mcp_companion.subscription.SubscriptionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -31,12 +32,15 @@ public class McpProtocolHandler {
 
 	private final McpServerProperties serverProperties;
 	private final ObjectMapper objectMapper;
+	private final SubscriptionManager subscriptionManager;
 
 	public McpProtocolHandler(
 			McpServerProperties serverProperties,
-			ObjectMapper objectMapper) {
+			ObjectMapper objectMapper,
+			SubscriptionManager subscriptionManager) {
 		this.serverProperties = serverProperties;
 		this.objectMapper = objectMapper;
+		this.subscriptionManager = subscriptionManager;
 	}
 
 	/**
@@ -202,12 +206,36 @@ public class McpProtocolHandler {
 
 	private void handleResourcesSubscribe(WebSocketSession session, McpConnection connection,
 			JsonNode jsonNode, Object id) throws Exception {
-		sendErrorResponse(session, id, -32601, "resources/subscribe not yet implemented");
+		JsonNode params = jsonNode.get("params");
+		if (params == null || !params.has("uri")) {
+			sendErrorResponse(session, id, -32602, "Missing required parameter: uri");
+			return;
+		}
+
+		String resourceUri = params.get("uri").asText();
+		if (subscriptionManager.subscribe(connection.getConnectionId(), resourceUri)) {
+			sendSuccessResponse(session, id, Map.of());
+			logger.info("Connection {} subscribed to resource: {}", connection.getConnectionId(), resourceUri);
+		} else {
+			sendErrorResponse(session, id, -32000, "Already subscribed to this resource");
+		}
 	}
 
 	private void handleResourcesUnsubscribe(WebSocketSession session, McpConnection connection,
 			JsonNode jsonNode, Object id) throws Exception {
-		sendErrorResponse(session, id, -32601, "resources/unsubscribe not yet implemented");
+		JsonNode params = jsonNode.get("params");
+		if (params == null || !params.has("uri")) {
+			sendErrorResponse(session, id, -32602, "Missing required parameter: uri");
+			return;
+		}
+
+		String resourceUri = params.get("uri").asText();
+		if (subscriptionManager.unsubscribe(connection.getConnectionId(), resourceUri)) {
+			sendSuccessResponse(session, id, Map.of());
+			logger.info("Connection {} unsubscribed from resource: {}", connection.getConnectionId(), resourceUri);
+		} else {
+			sendErrorResponse(session, id, -32000, "Not subscribed to this resource");
+		}
 	}
 
 	private void handlePromptsList(WebSocketSession session, McpConnection connection,
