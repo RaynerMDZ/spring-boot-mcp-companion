@@ -11,7 +11,9 @@ import com.raynermendez.spring_boot_mcp_companion.scanner.McpAnnotationScanner;
 import com.raynermendez.spring_boot_mcp_companion.security.ErrorMessageSanitizer;
 import com.raynermendez.spring_boot_mcp_companion.spi.DefaultMcpOutputSerializer;
 import com.raynermendez.spring_boot_mcp_companion.spi.McpOutputSerializer;
-import com.raynermendez.spring_boot_mcp_companion.transport.McpTransportController;
+import com.raynermendez.spring_boot_mcp_companion.transport.HttpStatusMapper;
+import com.raynermendez.spring_boot_mcp_companion.notification.SseNotificationManager;
+import com.raynermendez.spring_boot_mcp_companion.session.McpSessionManager;
 import com.raynermendez.spring_boot_mcp_companion.validation.DefaultMcpInputValidator;
 import com.raynermendez.spring_boot_mcp_companion.validation.McpInputValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,27 +97,18 @@ public class McpAutoConfiguration {
     return new ErrorMessageSanitizer();
   }
 
-  /**
-   * Creates the MCP transport controller that handles JSON-RPC 2.0 requests.
-   *
-   * <p>The controller is registered on the main Spring Boot application server,
-   * not on a separate embedded server. MCP endpoints are served alongside REST API
-   * endpoints under the configured base path (default: /mcp).
-   *
-   * @param dispatcher the MCP dispatcher
-   * @param registry the MCP definition registry
-   * @param properties MCP server properties (base path configuration)
-   * @param errorSanitizer error message sanitizer
-   * @param objectMapper Jackson ObjectMapper
-   * @return MCP transport controller
-   */
   @Bean
-  public McpTransportController mcpTransportController(
-      McpDispatcher dispatcher,
-      McpDefinitionRegistry registry,
-      McpServerProperties properties,
-      ErrorMessageSanitizer errorSanitizer,
-      ObjectMapper objectMapper) {
-    return new McpTransportController(dispatcher, registry, properties, errorSanitizer, objectMapper);
+  public HttpStatusMapper httpStatusMapper() {
+    return new HttpStatusMapper();
+  }
+
+  @Bean
+  public McpSessionManager mcpSessionManager() {
+    return new McpSessionManager(5); // 5 minute timeout
+  }
+
+  @Bean
+  public SseNotificationManager sseNotificationManager(ObjectMapper objectMapper) {
+    return new SseNotificationManager(objectMapper);
   }
 }

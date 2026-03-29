@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding;
  *     name: my-mcp-server
  *     version: 1.0.0
  *     base-path: /mcp
- *     protocol-version: 2025-06-18
+ *     protocol-version: 2025-11-25
  * }</pre>
  */
 @ConfigurationProperties(prefix = "mcp.server")
@@ -52,8 +52,8 @@ public record McpServerProperties(
     /**
      * MCP Protocol version supported by this server.
      * Must match the official MCP specification version.
-     * Current official version: "2025-06-18"
-     * Defaults to "2025-06-18".
+     * Current official version: "2025-11-25"
+     * Defaults to "2025-11-25".
      */
     String protocolVersion) {
 
@@ -77,6 +77,6 @@ public record McpServerProperties(
     this.name = name != null ? name : "spring-boot-mcp-companion";
     this.version = version != null ? version : "1.0.0";
     this.basePath = basePath != null ? basePath : "/mcp";
-    this.protocolVersion = protocolVersion != null ? protocolVersion : "2025-06-18";
+    this.protocolVersion = protocolVersion != null ? protocolVersion : "2025-11-25";
   }
 }
