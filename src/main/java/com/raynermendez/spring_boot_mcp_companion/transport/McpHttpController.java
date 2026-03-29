@@ -9,6 +9,7 @@ import com.raynermendez.spring_boot_mcp_companion.dispatch.McpDispatcher.McpReso
 import com.raynermendez.spring_boot_mcp_companion.dispatch.McpDispatcher.McpToolResult;
 import com.raynermendez.spring_boot_mcp_companion.model.McpPromptDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpResourceDefinition;
+import com.raynermendez.spring_boot_mcp_companion.model.McpResourceTemplate;
 import com.raynermendez.spring_boot_mcp_companion.model.McpToolDefinition;
 import com.raynermendez.spring_boot_mcp_companion.notification.SseNotificationManager;
 import com.raynermendez.spring_boot_mcp_companion.registry.McpDefinitionRegistry;
@@ -216,6 +217,7 @@ public class McpHttpController {
                 case "tools/list" -> handleToolsList(request);
                 case "tools/call" -> handleToolsCall(request);
                 case "resources/list" -> handleResourcesList(request);
+                case "resources/templates/list" -> handleResourceTemplatesList(request);
                 case "resources/read" -> handleResourcesRead(request);
                 case "resources/subscribe" -> handleResourcesSubscribe(request, session.get());
                 case "resources/unsubscribe" -> handleResourcesUnsubscribe(request, session.get());
@@ -297,7 +299,16 @@ public class McpHttpController {
     }
 
     /**
-     * Handles initialize request - creates session.
+     * Handles initialize request - creates session with capability negotiation.
+     *
+     * <p>This method implements the MCP 2025-11-25 lifecycle management protocol including:
+     * <ul>
+     *   <li>Protocol version negotiation
+     *   <li>Client information exchange
+     *   <li>Client capability discovery
+     *   <li>Server capability declaration
+     *   <li>Session creation with unique identifier
+     * </ul>
      */
     private ResponseEntity<?> handleInitialize(JsonRpcRequest request) {
         Object params = request.params();
@@ -310,6 +321,7 @@ public class McpHttpController {
         Map<String, Object> paramsMap = objectMapper.convertValue(params, Map.class);
         String clientVersion = (String) paramsMap.get("protocolVersion");
         Map<String, Object> clientInfo = (Map<String, Object>) paramsMap.get("clientInfo");
+        Map<String, Object> clientCapabilities = (Map<String, Object>) paramsMap.get("capabilities");
 
         // Validate protocol version
         if (clientVersion == null || !clientVersion.equals(properties.protocolVersion())) {
@@ -325,17 +337,56 @@ public class McpHttpController {
                 ));
         }
 
-        // Create session
+        // Build server capabilities (MCP 2025-11-25 compliant)
+        // Each capability object declares which features are supported
         Map<String, Object> serverCapabilities = new HashMap<>();
-        serverCapabilities.put("tools", Map.of());
-        serverCapabilities.put("resources", Map.of("subscribe", true));
-        serverCapabilities.put("prompts", Map.of());
 
+        // Server primitives capabilities
+        // Tools capability: declare listChanged notification support
+        serverCapabilities.put("tools", Map.of(
+            "listChanged", true  // Server sends tools/list_changed notifications
+        ));
+
+        // Resources capability: declare subscribe and listChanged support
+        serverCapabilities.put("resources", Map.of(
+            "subscribe", true,   // Clients can subscribe to resources
+            "listChanged", true  // Server sends resources/list_changed notifications
+        ));
+
+        // Prompts capability: declare listChanged support
+        serverCapabilities.put("prompts", Map.of(
+            "listChanged", true  // Server sends prompts/list_changed notifications
+        ));
+
+        // Client primitive support: Declare which client primitives this server uses
+        // Note: Requires matching client capability declaration in initialize request
+        // Sampling: Server can request LLM completions from client
+        // Elicitation: Server can request user input from client
+        // Logging: Server can send log messages to client
+        // Note: In HTTP Streamable Transport, client primitives are sent as notifications
+        // rather than request-response like Stdio transport (architectural limitation)
+        if (clientCapabilities != null) {
+            if (clientCapabilities.containsKey("sampling")) {
+                serverCapabilities.put("sampling", clientCapabilities.get("sampling"));
+            }
+            if (clientCapabilities.containsKey("elicitation")) {
+                serverCapabilities.put("elicitation", clientCapabilities.get("elicitation"));
+            }
+            if (clientCapabilities.containsKey("logging")) {
+                serverCapabilities.put("logging", clientCapabilities.get("logging"));
+            }
+        }
+
+        // Create session (stores client info and negotiated capabilities)
         McpSession session = sessionManager.createSession(clientVersion, clientInfo, serverCapabilities);
 
-        logger.info("Client initialized: session={}, version={}", session.getSessionId(), clientVersion);
+        // Store client capabilities in session for reference (MCP spec requirement)
+        session.setClientCapabilities(clientCapabilities != null ? clientCapabilities : Map.of());
 
-        // Build success response
+        logger.info("Client initialized: session={}, version={}, clientCapabilities={}",
+            session.getSessionId(), clientVersion, clientCapabilities);
+
+        // Build success response with negotiated settings
         Map<String, Object> result = Map.of(
             "protocolVersion", properties.protocolVersion(),
             "serverInfo", Map.of(
@@ -354,6 +405,9 @@ public class McpHttpController {
 
     /**
      * Handles tools/list request.
+     *
+     * <p>Returns all available tools with their metadata including name, title, description,
+     * and JSON Schema for input validation (MCP 2025-11-25 spec compliant).
      */
     private Object handleToolsList(JsonRpcRequest request) {
         List<Map<String, Object>> toolsList = new ArrayList<>();
@@ -361,6 +415,7 @@ public class McpHttpController {
         for (McpToolDefinition tool : registry.getTools()) {
             Map<String, Object> toolMap = new HashMap<>();
             toolMap.put("name", tool.name());
+            toolMap.put("title", tool.title());  // ADDED: MCP spec requires title field
             toolMap.put("description", tool.description());
             toolMap.put("inputSchema", tool.inputSchema());
             toolsList.add(toolMap);
@@ -398,6 +453,8 @@ public class McpHttpController {
 
     /**
      * Handles resources/list request.
+     *
+     * <p>Returns all available direct resources (fixed URIs) exposed by this server.
      */
     private Object handleResourcesList(JsonRpcRequest request) {
         List<Map<String, Object>> resourcesList = new ArrayList<>();
@@ -412,6 +469,49 @@ public class McpHttpController {
         }
 
         return Map.of("resources", resourcesList);
+    }
+
+    /**
+     * Handles resources/templates/list request.
+     *
+     * <p>Returns all available resource templates (dynamic URIs with parameters)
+     * exposed by this server. This implements MCP 2025-11-25 specification for
+     * parameterized resource access.
+     *
+     * <p>Example template: "weather://forecast/{city}/{date}"
+     */
+    private Object handleResourceTemplatesList(JsonRpcRequest request) {
+        List<Map<String, Object>> templatesList = new ArrayList<>();
+
+        for (McpResourceTemplate template : registry.getResourceTemplates()) {
+            Map<String, Object> templateMap = new HashMap<>();
+            templateMap.put("uriTemplate", template.uriTemplate());
+            templateMap.put("name", template.name());
+            templateMap.put("title", template.title());
+            templateMap.put("description", template.description());
+            templateMap.put("mimeType", template.mimeType());
+
+            // Include parameters with their schemas
+            if (template.parameters() != null && !template.parameters().isEmpty()) {
+                List<Map<String, Object>> paramsList = new ArrayList<>();
+                for (McpResourceTemplate.TemplateParameter param : template.parameters()) {
+                    Map<String, Object> paramMap = new HashMap<>();
+                    paramMap.put("name", param.name());
+                    paramMap.put("description", param.description());
+                    paramMap.put("type", param.type());
+                    if (param.schema() != null) {
+                        paramMap.put("schema", param.schema());
+                    }
+                    paramMap.put("required", param.required());
+                    paramsList.add(paramMap);
+                }
+                templateMap.put("parameters", paramsList);
+            }
+
+            templatesList.add(templateMap);
+        }
+
+        return Map.of("resources", templatesList);
     }
 
     /**
@@ -495,6 +595,9 @@ public class McpHttpController {
 
     /**
      * Handles prompts/list request.
+     *
+     * <p>Returns all available prompts with their metadata including name, title, and description
+     * (MCP 2025-11-25 spec compliant).
      */
     private Object handlePromptsList(JsonRpcRequest request) {
         List<Map<String, Object>> promptsList = new ArrayList<>();
@@ -502,6 +605,7 @@ public class McpHttpController {
         for (McpPromptDefinition prompt : registry.getPrompts()) {
             Map<String, Object> promptMap = new HashMap<>();
             promptMap.put("name", prompt.name());
+            promptMap.put("title", prompt.title());  // ADDED: MCP spec requires title field
             promptMap.put("description", prompt.description());
             promptsList.add(promptMap);
         }

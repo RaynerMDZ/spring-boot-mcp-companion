@@ -210,6 +210,88 @@ public class SseNotificationManager {
     }
 
     /**
+     * Sends a sampling/complete request to a specific client.
+     *
+     * <p>Requests the client (AI application) to perform language model sampling.
+     *
+     * @param clientId the target client
+     * @param model the model to use
+     * @param systemPrompt system prompt
+     * @param messages message history
+     */
+    public void sendSamplingCompleteRequest(
+        String clientId,
+        String model,
+        String systemPrompt,
+        java.util.List<Map<String, Object>> messages
+    ) {
+        Map<String, Object> params = Map.of(
+            "model", model,
+            "systemPrompt", systemPrompt,
+            "messages", messages != null ? messages : java.util.List.of()
+        );
+        sendNotification(clientId, "sampling/complete", params);
+    }
+
+    /**
+     * Sends an elicitation/request to a specific client.
+     *
+     * <p>Requests the client (user) to provide additional input.
+     *
+     * @param clientId the target client
+     * @param type type of elicitation
+     * @param title user-facing title
+     * @param description description of request
+     */
+    public void sendElicitationRequest(
+        String clientId,
+        String type,
+        String title,
+        String description
+    ) {
+        Map<String, Object> params = Map.of(
+            "type", type,
+            "title", title,
+            "description", description
+        );
+        sendNotification(clientId, "elicitation/request", params);
+    }
+
+    /**
+     * Sends a logging/message to a specific client.
+     *
+     * <p>Sends a log message to the client for monitoring and debugging.
+     *
+     * @param clientId the target client
+     * @param level log level (debug, info, warn, error)
+     * @param message the log message
+     */
+    public void sendLoggingMessage(
+        String clientId,
+        String level,
+        String message
+    ) {
+        Map<String, Object> params = Map.of(
+            "level", level,
+            "message", message
+        );
+        sendNotification(clientId, "logging/message", params);
+    }
+
+    /**
+     * Broadcasts a logging/message to all connected clients.
+     *
+     * @param level log level
+     * @param message the log message
+     */
+    public void broadcastLoggingMessage(String level, String message) {
+        broadcastNotification("logging/message", Map.of(
+            "level", level,
+            "message", message
+        ));
+    }
+
+    /**
      * Closes all SSE connections (for shutdown).
      */
     public void closeAllConnections() {

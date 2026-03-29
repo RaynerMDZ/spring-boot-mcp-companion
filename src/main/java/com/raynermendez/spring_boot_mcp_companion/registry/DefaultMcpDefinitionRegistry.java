@@ -2,6 +2,7 @@ package com.raynermendez.spring_boot_mcp_companion.registry;
 
 import com.raynermendez.spring_boot_mcp_companion.model.McpPromptDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpResourceDefinition;
+import com.raynermendez.spring_boot_mcp_companion.model.McpResourceTemplate;
 import com.raynermendez.spring_boot_mcp_companion.model.McpToolDefinition;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,14 +12,17 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Thread-safe implementation of the MCP Definition Registry.
  *
- * <p>This class manages registration of Tools, Resources, and Prompts using concurrent data
- * structures. It enforces uniqueness by name/URI and transitions through states as definitions
- * are added and the registry is finalized.
+ * <p>This class manages registration of Tools, Resources (direct and templates), and Prompts
+ * using concurrent data structures. It enforces uniqueness by name/URI/template-name and
+ * transitions through states as definitions are added and the registry is finalized.
+ *
+ * <p>Implements MCP 2025-11-25 specification for resource templates support.
  */
 public class DefaultMcpDefinitionRegistry implements McpDefinitionRegistry {
 
   private final ConcurrentHashMap<String, McpToolDefinition> tools;
   private final ConcurrentHashMap<String, McpResourceDefinition> resources;
+  private final ConcurrentHashMap<String, McpResourceTemplate> resourceTemplates;
   private final ConcurrentHashMap<String, McpPromptDefinition> prompts;
   private volatile RegistryState state;
 
@@ -26,6 +30,7 @@ public class DefaultMcpDefinitionRegistry implements McpDefinitionRegistry {
   public DefaultMcpDefinitionRegistry() {
     this.tools = new ConcurrentHashMap<>();
     this.resources = new ConcurrentHashMap<>();
+    this.resourceTemplates = new ConcurrentHashMap<>();
     this.prompts = new ConcurrentHashMap<>();
     this.state = RegistryState.EMPTY;
   }
@@ -76,6 +81,21 @@ public class DefaultMcpDefinitionRegistry implements McpDefinitionRegistry {
   }
 
   @Override
+  public void register(McpResourceTemplate template) {
+    if (state == RegistryState.READY) {
+      throw new IllegalStateException("Cannot register resource template: registry is locked");
+    }
+
+    if (resourceTemplates.putIfAbsent(template.name(), template) != null) {
+      throw new IllegalStateException("Duplicate resource template name: " + template.name());
+    }
+
+    if (state == RegistryState.EMPTY) {
+      state = RegistryState.BUILDING;
+    }
+  }
+
+  @Override
   public List<McpToolDefinition> getTools() {
     return Collections.unmodifiableList(new ArrayList<>(tools.values()));
   }
@@ -83,6 +103,11 @@ public class DefaultMcpDefinitionRegistry implements McpDefinitionRegistry {
   @Override
   public List<McpResourceDefinition> getResources() {
     return Collections.unmodifiableList(new ArrayList<>(resources.values()));
+  }
+
+  @Override
+  public List<McpResourceTemplate> getResourceTemplates() {
+    return Collections.unmodifiableList(new ArrayList<>(resourceTemplates.values()));
   }
 
   @Override

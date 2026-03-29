@@ -6,10 +6,13 @@ import java.util.List;
  * Immutable record representing a complete MCP Prompt definition.
  *
  * <p>This record encapsulates metadata for a prompt template exposed via the MCP protocol,
- * including its name, description, arguments, and handler reference.
+ * including its name, title, description, arguments, and handler reference.
+ *
+ * <p>Complies with MCP 2025-11-25 specification for prompt definitions.
  */
 public record McpPromptDefinition(
     String name,
+    String title,
     String description,
     List<McpPromptArgument> arguments,
     MethodHandlerRef handler) {
@@ -17,9 +20,10 @@ public record McpPromptDefinition(
   /**
    * Creates a new prompt definition.
    *
-   * @param name the prompt template name
+   * @param name the prompt template name (unique identifier)
+   * @param title human-readable display title for the prompt in UI
    * @param description human-readable description of the prompt
-   * @param arguments list of prompt arguments
+   * @param arguments list of prompt arguments with schema
    * @param handler method handler reference for execution
    */
   public McpPromptDefinition {}

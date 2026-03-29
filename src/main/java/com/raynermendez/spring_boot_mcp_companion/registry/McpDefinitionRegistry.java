@@ -2,6 +2,7 @@ package com.raynermendez.spring_boot_mcp_companion.registry;
 
 import com.raynermendez.spring_boot_mcp_companion.model.McpPromptDefinition;
 import com.raynermendez.spring_boot_mcp_companion.model.McpResourceDefinition;
+import com.raynermendez.spring_boot_mcp_companion.model.McpResourceTemplate;
 import com.raynermendez.spring_boot_mcp_companion.model.McpToolDefinition;
 import java.util.List;
 
@@ -51,6 +52,18 @@ public interface McpDefinitionRegistry {
   void register(McpPromptDefinition prompt);
 
   /**
+   * Registers a resource template definition.
+   *
+   * <p>Resource templates enable dynamic resource access with parameterized URIs.
+   * Throws an exception if a template with the same name already exists.
+   *
+   * @param template the resource template definition to register
+   * @throws IllegalStateException if a template with the same name exists, or if the registry is
+   *     locked
+   */
+  void register(McpResourceTemplate template);
+
+  /**
    * Returns an unmodifiable list of all registered tools.
    *
    * @return list of tool definitions
@@ -63,6 +76,13 @@ public interface McpDefinitionRegistry {
    * @return list of resource definitions
    */
   List<McpResourceDefinition> getResources();
+
+  /**
+   * Returns an unmodifiable list of all registered resource templates.
+   *
+   * @return list of resource template definitions
+   */
+  List<McpResourceTemplate> getResourceTemplates();
 
   /**
    * Returns an unmodifiable list of all registered prompts.

@@ -28,6 +28,7 @@ public class McpSession {
     private final String protocolVersion;
     private final Map<String, Object> serverCapabilities;
     private final Map<String, String> subscriptions; // resourceUri -> subscriptionId
+    private Map<String, Object> clientCapabilities; // Client capabilities from initialize request
 
     /**
      * Creates a new MCP session.
@@ -48,6 +49,7 @@ public class McpSession {
         this.clientInfo = clientInfo != null ? new HashMap<>(clientInfo) : new HashMap<>();
         this.serverCapabilities = serverCapabilities != null ? new HashMap<>(serverCapabilities) : new HashMap<>();
         this.subscriptions = new HashMap<>();
+        this.clientCapabilities = new HashMap<>();  // Initialize empty, will be set via setClientCapabilities
 
         Instant now = Instant.now();
         this.createdAt = now;
@@ -101,6 +103,34 @@ public class McpSession {
      */
     public Map<String, Object> getServerCapabilities() {
         return new HashMap<>(serverCapabilities);
+    }
+
+    /**
+     * Sets the client capabilities from the initialize request.
+     *
+     * <p>MCP spec requires servers to acknowledge client capabilities.
+     *
+     * @param capabilities the client capabilities
+     */
+    public void setClientCapabilities(Map<String, Object> capabilities) {
+        this.clientCapabilities = capabilities != null ? new HashMap<>(capabilities) : new HashMap<>();
+    }
+
+    /**
+     * Gets the client capabilities from the initialize request.
+     */
+    public Map<String, Object> getClientCapabilities() {
+        return new HashMap<>(clientCapabilities);
+    }
+
+    /**
+     * Checks if client supports a specific capability.
+     *
+     * @param capability the capability name (e.g., "elicitation", "sampling")
+     * @return true if client declares support for this capability
+     */
+    public boolean supportsClientCapability(String capability) {
+        return clientCapabilities.containsKey(capability);
     }
 
     /**
