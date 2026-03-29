@@ -140,7 +140,7 @@ Test error handling:
 
 ## JSON-RPC 2.0 Format
 
-All requests use JSON-RPC 2.0:
+The MCP specification uses a **single endpoint** (`POST /mcp`) with JSON-RPC 2.0 protocol. The operation is specified in the `method` field:
 
 ```json
 {
@@ -150,6 +150,16 @@ All requests use JSON-RPC 2.0:
   "params": {}
 }
 ```
+
+### Available Methods
+
+- `server/info` - Get server metadata
+- `tools/list` - List available tools
+- `tools/call` - Call a tool
+- `resources/list` - List available resources
+- `resources/read` - Read a resource
+- `prompts/list` - List available prompts
+- `prompts/get` - Get a prompt template
 
 ### Response Format
 
@@ -173,6 +183,16 @@ Error:
   }
 }
 ```
+
+### MCP Specification Reference
+
+According to the official MCP documentation:
+- **Single Transport**: All communication goes through one endpoint (`/mcp`)
+- **JSON-RPC 2.0**: Standard JSON-RPC 2.0 protocol for request/response
+- **Methods**: Operations specified in the `method` field (e.g., `tools/list`, `resources/read`)
+- **No separate HTTP endpoints**: Don't use `/mcp/tools/list` or `/mcp/resources/read` - use `/mcp` with the method field
+
+See: https://modelcontextprotocol.io/docs/develop/build-client
 
 ## Customization
 
