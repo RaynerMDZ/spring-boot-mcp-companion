@@ -142,7 +142,9 @@ public class McpProtocolHandler {
 		logger.info("Connection {} initializing with client: {}",
 				connection.getConnectionId(), clientInfo);
 
-		// Send initialize response
+		// Send initialize response with only implemented capabilities
+		// Note: capability claims MUST match actual implementation per MCP spec
+		// Only include capabilities that are fully implemented and compliant
 		sendSuccessResponse(session, id, Map.of(
 				"protocolVersion", serverProperties.getProtocolVersion(),
 				"serverInfo", Map.of(
@@ -150,7 +152,6 @@ public class McpProtocolHandler {
 						"version", serverProperties.getVersion()
 				),
 				"capabilities", Map.of(
-						"logging", Map.of(),
 						"tools", Map.of(),
 						"resources", Map.of(
 								"subscribe", true
