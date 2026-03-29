@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raynermendez.spring_boot_mcp_companion.connection.McpConnection;
 import com.raynermendez.spring_boot_mcp_companion.connection.McpConnectionManager;
+import com.raynermendez.spring_boot_mcp_companion.notification.NotificationDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -29,14 +30,17 @@ public class McpWebSocketHandler extends TextWebSocketHandler {
 
 	private final McpConnectionManager connectionManager;
 	private final McpProtocolHandler protocolHandler;
+	private final NotificationDispatcher notificationDispatcher;
 	private final ObjectMapper objectMapper;
 
 	public McpWebSocketHandler(
 			McpConnectionManager connectionManager,
 			McpProtocolHandler protocolHandler,
+			NotificationDispatcher notificationDispatcher,
 			ObjectMapper objectMapper) {
 		this.connectionManager = connectionManager;
 		this.protocolHandler = protocolHandler;
+		this.notificationDispatcher = notificationDispatcher;
 		this.objectMapper = objectMapper;
 	}
 
@@ -46,6 +50,9 @@ public class McpWebSocketHandler extends TextWebSocketHandler {
 		McpConnection connection = connectionManager.createConnection();
 		session.getAttributes().put("mcpConnection", connection);
 		session.getAttributes().put("connectionId", connection.getConnectionId());
+
+		// Register session with notification dispatcher
+		notificationDispatcher.registerSession(connection.getConnectionId(), session);
 
 		logger.info("WebSocket connection established: {}", connection.getConnectionId());
 	}
@@ -93,6 +100,7 @@ public class McpWebSocketHandler extends TextWebSocketHandler {
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
 		McpConnection connection = (McpConnection) session.getAttributes().get("mcpConnection");
 		if (connection != null) {
+			notificationDispatcher.unregisterSession(connection.getConnectionId());
 			connectionManager.removeConnection(connection.getConnectionId());
 			logger.info("WebSocket connection closed: {} ({})",
 					connection.getConnectionId(), closeStatus.getReason());
