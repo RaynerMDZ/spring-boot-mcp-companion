@@ -129,65 +129,65 @@ public class SseNotificationManager {
      * @param clientId the target client
      */
     public void notifyToolsListChanged(String clientId) {
-        sendNotification(clientId, "tools/list_changed", Map.of());
+        sendNotification(clientId, "notifications/tools/list_changed", Map.of());
     }
 
     /**
-     * Broadcasts tools/list_changed to all clients.
+     * Broadcasts notifications/tools/list_changed to all clients.
      */
     public void broadcastToolsListChanged() {
-        broadcastNotification("tools/list_changed", Map.of());
+        broadcastNotification("notifications/tools/list_changed", Map.of());
     }
 
     /**
-     * Sends resources/list_changed notification to a client.
+     * Sends notifications/resources/list_changed notification to a client.
      *
      * @param clientId the target client
      */
     public void notifyResourcesListChanged(String clientId) {
-        sendNotification(clientId, "resources/list_changed", Map.of());
+        sendNotification(clientId, "notifications/resources/list_changed", Map.of());
     }
 
     /**
-     * Broadcasts resources/list_changed to all clients.
+     * Broadcasts notifications/resources/list_changed to all clients.
      */
     public void broadcastResourcesListChanged() {
-        broadcastNotification("resources/list_changed", Map.of());
+        broadcastNotification("notifications/resources/list_changed", Map.of());
     }
 
     /**
-     * Sends prompts/list_changed notification to a client.
+     * Sends notifications/prompts/list_changed notification to a client.
      *
      * @param clientId the target client
      */
     public void notifyPromptsListChanged(String clientId) {
-        sendNotification(clientId, "prompts/list_changed", Map.of());
+        sendNotification(clientId, "notifications/prompts/list_changed", Map.of());
     }
 
     /**
-     * Broadcasts prompts/list_changed to all clients.
+     * Broadcasts notifications/prompts/list_changed to all clients.
      */
     public void broadcastPromptsListChanged() {
-        broadcastNotification("prompts/list_changed", Map.of());
+        broadcastNotification("notifications/prompts/list_changed", Map.of());
     }
 
     /**
-     * Sends resources/updated notification for a specific resource.
+     * Sends notifications/resources/updated notification for a specific resource.
      *
      * @param clientId the target client
      * @param resourceUri the URI of the updated resource
      */
     public void notifyResourceUpdated(String clientId, String resourceUri) {
-        sendNotification(clientId, "resources/updated", Map.of("uri", resourceUri));
+        sendNotification(clientId, "notifications/resources/updated", Map.of("uri", resourceUri));
     }
 
     /**
-     * Broadcasts resources/updated for a specific resource to all clients.
+     * Broadcasts notifications/resources/updated for a specific resource to all clients.
      *
      * @param resourceUri the URI of the updated resource
      */
     public void broadcastResourceUpdated(String resourceUri) {
-        broadcastNotification("resources/updated", Map.of("uri", resourceUri));
+        broadcastNotification("notifications/resources/updated", Map.of("uri", resourceUri));
     }
 
     /**
@@ -230,7 +230,10 @@ public class SseNotificationManager {
             "systemPrompt", systemPrompt,
             "messages", messages != null ? messages : java.util.List.of()
         );
-        sendNotification(clientId, "sampling/complete", params);
+        // Note: sampling/createMessage is a JSON-RPC request (needs id + response handling),
+        // not a notification. This sends it as a notification — a proper implementation
+        // would require bidirectional request-response over SSE.
+        sendNotification(clientId, "sampling/createMessage", params);
     }
 
     /**
@@ -254,7 +257,10 @@ public class SseNotificationManager {
             "title", title,
             "description", description
         );
-        sendNotification(clientId, "elicitation/request", params);
+        // Note: elicitation/create is a JSON-RPC request (needs id + response handling),
+        // not a notification. This sends it as a notification — a proper implementation
+        // would require bidirectional request-response over SSE.
+        sendNotification(clientId, "elicitation/create", params);
     }
 
     /**
@@ -275,7 +281,7 @@ public class SseNotificationManager {
             "level", level,
             "message", message
         );
-        sendNotification(clientId, "logging/message", params);
+        sendNotification(clientId, "notifications/message", params);
     }
 
     /**
@@ -285,7 +291,7 @@ public class SseNotificationManager {
      * @param message the log message
      */
     public void broadcastLoggingMessage(String level, String message) {
-        broadcastNotification("logging/message", Map.of(
+        broadcastNotification("notifications/message", Map.of(
             "level", level,
             "message", message
         ));

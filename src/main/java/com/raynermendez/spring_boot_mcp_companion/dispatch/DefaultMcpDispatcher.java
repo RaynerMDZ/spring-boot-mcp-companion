@@ -208,7 +208,7 @@ public class DefaultMcpDispatcher implements McpDispatcher {
 
       if (resourceDef == null) {
         String errorMsg = "Resource not found: " + uri;
-        return new McpDispatcher.McpResourceResult(uri, errorMsg, "text/plain", true);
+        return new McpDispatcher.McpResourceResult(uri, errorMsg, "text/plain", true, -32002);
       }
 
       // Security: Verify the method is safe to invoke
@@ -224,13 +224,13 @@ public class DefaultMcpDispatcher implements McpDispatcher {
       String serializedResult = serializer.serialize(result, null);
 
       return new McpDispatcher.McpResourceResult(
-          uri, serializedResult, resourceDef.mimeType(), false);
+          uri, serializedResult, resourceDef.mimeType(), false, 0);
 
     } catch (Exception e) {
       String errorMsg = "Error reading resource '" + uri + "': " + e.getMessage();
       // Security: Do not log resource parameters to avoid exposing sensitive data
       logger.error("Error reading resource '{}'", uri, e);
-      return new McpDispatcher.McpResourceResult(uri, errorMsg, "text/plain", true);
+      return new McpDispatcher.McpResourceResult(uri, errorMsg, "text/plain", true, -32603);
     }
   }
 

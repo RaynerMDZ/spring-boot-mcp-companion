@@ -134,12 +134,13 @@ public class McpHttpController {
      * @return response entity with appropriate status code
      * @throws IOException if streaming fails
      */
-    @RequestMapping(path = "/mcp", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(path = "/mcp", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE})
     public ResponseEntity<?> handleMcpRequest(
         HttpServletRequest request,
         @RequestHeader(value = "Accept", required = false) String accept,
         @RequestHeader(value = "Content-Type", required = false) String contentType,
         @RequestHeader(value = MCP_SESSION_ID_HEADER, required = false) String sessionId,
+        @RequestHeader(value = MCP_PROTOCOL_VERSION_HEADER, required = false) String protocolVersionHeader,
         @RequestHeader(value = "Origin", required = false) String origin,
         @RequestBody(required = false) String body
     ) throws IOException {
@@ -156,7 +157,9 @@ public class McpHttpController {
         if ("GET".equalsIgnoreCase(request.getMethod())) {
             return handleSseStream(sessionId);
         } else if ("POST".equalsIgnoreCase(request.getMethod())) {
-            return handleJsonRpcRequest(sessionId, body);
+            return handleJsonRpcRequest(sessionId, protocolVersionHeader, body);
+        } else if ("DELETE".equalsIgnoreCase(request.getMethod())) {
+            return handleSessionDelete(sessionId);
         }
 
         // Unsupported method
@@ -166,9 +169,22 @@ public class McpHttpController {
     }
 
     /**
+     * Handles DELETE requests for session termination per MCP spec.
+     * Clients SHOULD send DELETE when no longer needing the session.
+     */
+    private ResponseEntity<?> handleSessionDelete(String sessionId) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        sessionManager.closeSession(sessionId);
+        logger.info("Session terminated via DELETE: {}", sessionId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Handles POST requests with JSON-RPC 2.0 protocol.
      */
-    private ResponseEntity<?> handleJsonRpcRequest(String sessionId, String body) {
+    private ResponseEntity<?> handleJsonRpcRequest(String sessionId, String protocolVersionHeader, String body) {
         // Validate and parse JSON-RPC request
         JsonRpcRequest request;
         try {
@@ -201,11 +217,20 @@ public class McpHttpController {
                 return handleInitialize(request);
             }
 
-            // All other methods require valid session
+            // Notifications require 202 Accepted per MCP Streamable HTTP spec
             if ("notifications/initialized".equals(method)) {
-                // This is a notification - no response needed
                 logger.debug("Received notifications/initialized");
-                return ResponseEntity.ok().build();
+                return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+            }
+
+            // Validate MCP-Protocol-Version header on all non-initialize requests
+            // Per spec: server MUST respond with 400 if version is invalid or unsupported
+            if (protocolVersionHeader != null && !properties.protocolVersion().equals(protocolVersionHeader)) {
+                return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(createJsonRpcErrorResponse(request.id(), -32600,
+                        "Unsupported MCP-Protocol-Version: " + protocolVersionHeader +
+                        ". Server supports: " + properties.protocolVersion()));
             }
 
             // Validate session for all other methods
@@ -280,10 +305,11 @@ public class McpHttpController {
         SseEmitter emitter = notificationManager.createEmitter(sessionId, 5 * 60 * 1000);
 
         try {
-            // Send initial connection confirmation
+            // Send priming event per MCP Streamable HTTP spec:
+            // an SSE event with an ID and empty data field, so clients can use it as Last-Event-ID for reconnect
             emitter.send(SseEmitter.event()
-                .id("connected")
-                .data(objectMapper.writeValueAsString(createJsonRpcNotification("server/initialized", Map.of())))
+                .id("0")
+                .data("")
                 .build());
         } catch (IOException e) {
             logger.warn("Failed to send SSE initial message: {}", e.getMessage());
@@ -327,23 +353,10 @@ public class McpHttpController {
         Map<String, Object> clientInfo = (Map<String, Object>) paramsMap.get("clientInfo");
         Map<String, Object> clientCapabilities = (Map<String, Object>) paramsMap.get("capabilities");
 
-        // Validate protocol version
-        // NOTE: Using exact version match (conservative approach for spec compliance)
-        // MCP spec says "compatible" but doesn't define compatibility rules.
-        // For initial implementation, exact match prevents version mismatch issues.
-        // Can be relaxed to semantic version matching if needed in future.
-        if (clientVersion == null || !clientVersion.equals(properties.protocolVersion())) {
-            return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(createJsonRpcErrorResponse(
-                    request.id(),
-                    -32000,
-                    "Incompatible protocol version. Server supports " +
-                    properties.protocolVersion() +
-                    " but client requested " +
-                    clientVersion
-                ));
-        }
+        // Per MCP spec: server MUST respond with a version it supports (not reject).
+        // The client then decides whether to disconnect if it cannot support the server's version.
+        // We always respond with our supported version regardless of what the client requested.
+        String negotiatedVersion = properties.protocolVersion();
 
         // Build server capabilities (MCP 2025-11-25 compliant)
         // Each capability object declares which features are supported
@@ -392,9 +405,10 @@ public class McpHttpController {
 
         // Build success response with negotiated settings
         Map<String, Object> result = Map.of(
-            "protocolVersion", properties.protocolVersion(),
+            "protocolVersion", negotiatedVersion,
             "serverInfo", Map.of(
                 "name", properties.name(),
+                "title", properties.name(),
                 "version", properties.version()
             ),
             "capabilities", serverCapabilities
@@ -445,14 +459,16 @@ public class McpHttpController {
             return createJsonRpcErrorResponse(request.id(), -32602, "Missing tool name");
         }
 
-        // Dispatch tool call
-        McpToolResult result = dispatcher.dispatchTool(toolName, arguments != null ? arguments : Map.of());
-
-        if (result.isError()) {
-            return createJsonRpcErrorResponse(request.id(), -32000, contentToString(result.content()));
+        // Unknown tool is a protocol error (JSON-RPC error), not a tool execution error
+        boolean toolExists = registry.getTools().stream().anyMatch(t -> t.name().equals(toolName));
+        if (!toolExists) {
+            return createJsonRpcErrorResponse(request.id(), -32602, "Unknown tool: " + toolName);
         }
 
-        return Map.of("content", result.content());
+        // Dispatch tool call; always return isError in result per MCP spec
+        McpToolResult result = dispatcher.dispatchTool(toolName, arguments != null ? arguments : Map.of());
+
+        return Map.of("content", result.content(), "isError", result.isError());
     }
 
     /**
@@ -494,28 +510,12 @@ public class McpHttpController {
             templateMap.put("title", template.title());
             templateMap.put("description", template.description());
             templateMap.put("mimeType", template.mimeType());
-
-            // Include parameters with their schemas
-            if (template.parameters() != null && !template.parameters().isEmpty()) {
-                List<Map<String, Object>> paramsList = new ArrayList<>();
-                for (McpResourceTemplate.TemplateParameter param : template.parameters()) {
-                    Map<String, Object> paramMap = new HashMap<>();
-                    paramMap.put("name", param.name());
-                    paramMap.put("description", param.description());
-                    paramMap.put("type", param.type());
-                    if (param.schema() != null) {
-                        paramMap.put("schema", param.schema());
-                    }
-                    paramMap.put("required", param.required());
-                    paramsList.add(paramMap);
-                }
-                templateMap.put("parameters", paramsList);
-            }
-
+            // Template parameters are encoded in the RFC 6570 uriTemplate string per MCP spec;
+            // no separate "parameters" array is defined in the protocol.
             templatesList.add(templateMap);
         }
 
-        return Map.of("resources", templatesList);
+        return Map.of("resourceTemplates", templatesList);
     }
 
     /**
@@ -538,11 +538,10 @@ public class McpHttpController {
         McpResourceResult result = dispatcher.dispatchResource(uri, Map.of());
 
         if (result.isError()) {
-            return createJsonRpcErrorResponse(request.id(), -32000, result.content());
+            return createJsonRpcErrorResponse(request.id(), result.errorCode(), result.content());
         }
 
         return Map.of(
-            "uri", result.uri(),
             "contents", List.of(
                 Map.of(
                     "uri", result.uri(),
@@ -574,10 +573,8 @@ public class McpHttpController {
 
         logger.info("Client subscribed to resource: uri={}, subscriptionId={}", uri, subscriptionId);
 
-        // CRITICAL FIX: Return subscriptionId to client for confirmation
-        // Per MCP spec "Subscription confirmation" - client needs this ID to track subscription
-        // and potentially unsubscribe or distinguish multiple subscriptions to same resource
-        return Map.of("subscriptionId", subscriptionId);
+        // MCP spec: subscription confirmation response is an empty result object
+        return Map.of();
     }
 
     /**
@@ -616,9 +613,17 @@ public class McpHttpController {
             promptMap.put("title", prompt.title());
             promptMap.put("description", prompt.description());
 
-            // Include argument schema if prompt accepts arguments (MCP spec requirement)
+            // MCP spec: prompts/list includes arguments as an array of {name, description, required}
             if (prompt.arguments() != null && !prompt.arguments().isEmpty()) {
-                promptMap.put("argumentSchema", promptValidator.buildArgumentSchema(prompt));
+                List<Map<String, Object>> argumentsList = new ArrayList<>();
+                for (com.raynermendez.spring_boot_mcp_companion.model.McpPromptDefinition.McpPromptArgument arg : prompt.arguments()) {
+                    Map<String, Object> argMap = new HashMap<>();
+                    argMap.put("name", arg.name());
+                    argMap.put("description", arg.description());
+                    argMap.put("required", arg.required());
+                    argumentsList.add(argMap);
+                }
+                promptMap.put("arguments", argumentsList);
             }
 
             promptsList.add(promptMap);
@@ -684,24 +689,20 @@ public class McpHttpController {
             logger.debug("Substituted variables in prompt {}: {} args applied", promptName, validatedArgs.size());
         }
 
-        // Build response with argument schema (MCP spec)
+        // MCP spec prompts/get response: {description, messages}
         Map<String, Object> promptContentMap = new HashMap<>();
         promptContentMap.put("type", "text");
         promptContentMap.put("text", promptText);
 
-        if (promptDef != null && promptDef.arguments() != null && !promptDef.arguments().isEmpty()) {
-            Map<String, Object> argSchema = promptValidator.buildArgumentSchema(promptDef);
-            promptContentMap.put("argumentSchema", argSchema);
-        }
-
-        return Map.of(
-            "messages", List.of(
-                Map.of(
-                    "role", "user",
-                    "content", promptContentMap
-                )
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("description", promptDef != null ? promptDef.description() : "");
+        resultMap.put("messages", List.of(
+            Map.of(
+                "role", "user",
+                "content", promptContentMap
             )
-        );
+        ));
+        return resultMap;
     }
 
     /**
@@ -717,27 +718,29 @@ public class McpHttpController {
 
     /**
      * Creates a JSON-RPC success response.
+     * Uses HashMap to allow null id (required for spec-compliant responses before id is known).
      */
     private Map<String, Object> createJsonRpcSuccessResponse(Object id, Object result) {
-        return Map.of(
-            "jsonrpc", "2.0",
-            "id", id,
-            "result", result
-        );
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("jsonrpc", "2.0");
+        response.put("id", id);
+        response.put("result", result);
+        return response;
     }
 
     /**
      * Creates a JSON-RPC error response.
+     * Uses HashMap to allow null id (required for parse errors before request id is known).
      */
     private Map<String, Object> createJsonRpcErrorResponse(Object id, int errorCode, String message) {
-        return Map.of(
-            "jsonrpc", "2.0",
-            "id", id,
-            "error", Map.of(
-                "code", errorCode,
-                "message", message
-            )
-        );
+        Map<String, Object> error = new java.util.LinkedHashMap<>();
+        error.put("code", errorCode);
+        error.put("message", message != null ? message : "Internal error");
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("jsonrpc", "2.0");
+        response.put("id", id);
+        response.put("error", error);
+        return response;
     }
 
     /**

@@ -61,8 +61,9 @@ public interface McpDispatcher {
    * @param content the resource content
    * @param mimeType the MIME type of the content
    * @param isError whether the read resulted in an error
+   * @param errorCode JSON-RPC error code to use when isError is true (-32002 not found, -32603 internal)
    */
-  record McpResourceResult(String uri, String content, String mimeType, boolean isError) {}
+  record McpResourceResult(String uri, String content, String mimeType, boolean isError, int errorCode) {}
 
   /**
    * Represents the result of a prompt invocation.

@@ -3,6 +3,7 @@ package com.raynermendez.spring_boot_mcp_companion.transport;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.raynermendez.spring_boot_mcp_companion.session.McpSession;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raynermendez.spring_boot_mcp_companion.config.McpServerProperties;
@@ -62,6 +63,10 @@ class McpHttpControllerTest {
             statusMapper,
             mock(com.raynermendez.spring_boot_mcp_companion.prompt.PromptArgumentValidator.class)
         );
+
+        // Stub createSession to return a real McpSession (lenient to avoid unused stubbing errors)
+        McpSession mockSession = new McpSession("test-session-id", "2025-11-25", Map.of(), Map.of());
+        lenient().when(sessionManager.createSession(any(), any(), any())).thenReturn(mockSession);
     }
 
     @Test
@@ -84,7 +89,7 @@ class McpHttpControllerTest {
 
         // Act
         ResponseEntity<?> response = controller.handleMcpRequest(
-            httpRequest, "application/json", "application/json", null, null, requestBody
+            httpRequest, "application/json", "application/json", null, null, null, requestBody
         );
 
         // Assert
@@ -94,8 +99,9 @@ class McpHttpControllerTest {
     }
 
     @Test
-    void testInitializeRequest_IncompatibleVersion() throws Exception {
-        // Arrange
+    void testInitializeRequest_DifferentVersion_RespondsWithServerVersion() throws Exception {
+        // Arrange - per MCP spec, server MUST respond with its own supported version,
+        // not reject the client. The client then decides whether to disconnect.
         String requestBody = """
             {
               "jsonrpc": "2.0",
@@ -113,11 +119,12 @@ class McpHttpControllerTest {
 
         // Act
         ResponseEntity<?> response = controller.handleMcpRequest(
-            httpRequest, "application/json", "application/json", null, null, requestBody
+            httpRequest, "application/json", "application/json", null, null, null, requestBody
         );
 
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        // Assert: server responds 200 OK with its own protocol version
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("2025-11-25", response.getHeaders().getFirst("MCP-Protocol-Version"));
     }
 
     @Test
@@ -144,7 +151,7 @@ class McpHttpControllerTest {
 
         // Act
         ResponseEntity<?> response = controller.handleMcpRequest(
-            httpRequest, "application/json", "application/json", "session-123", null, requestBody
+            httpRequest, "application/json", "application/json", "session-123", null, null, requestBody
         );
 
         // Assert
@@ -172,7 +179,7 @@ class McpHttpControllerTest {
 
         // Act
         ResponseEntity<?> response = controller.handleMcpRequest(
-            httpRequest, "application/json", "application/json", "session-123", null, requestBody
+            httpRequest, "application/json", "application/json", "session-123", null, null, requestBody
         );
 
         // Assert
@@ -198,7 +205,7 @@ class McpHttpControllerTest {
 
         // Act
         ResponseEntity<?> response = controller.handleMcpRequest(
-            httpRequest, "application/json", "application/json", "expired-session", null, requestBody
+            httpRequest, "application/json", "application/json", "expired-session", null, null, requestBody
         );
 
         // Assert
@@ -228,7 +235,7 @@ class McpHttpControllerTest {
 
         // Act
         ResponseEntity<?> response = controller.handleMcpRequest(
-            httpRequest, "application/json", "application/json", "session-123", null, requestBody
+            httpRequest, "application/json", "application/json", "session-123", null, null, requestBody
         );
 
         // Assert
@@ -245,7 +252,7 @@ class McpHttpControllerTest {
 
         // Act
         ResponseEntity<?> response = controller.handleMcpRequest(
-            httpRequest, "application/json", "application/json", null, null, requestBody
+            httpRequest, "application/json", "application/json", null, null, null, requestBody
         );
 
         // Assert
